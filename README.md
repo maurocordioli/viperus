@@ -10,6 +10,10 @@ no Go projects are built using Viperus.
 merge configurration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
 with defaults, and type cheking
 
+## loging/debug
+the crate uses "log" facade so you can set the env variable to RUST=viperus=[DEBUG LEVEL] with
+[DEBUG LEVEL] = INFO|WARN|DEBUG 
+
 
 ## Example
 ```rust
