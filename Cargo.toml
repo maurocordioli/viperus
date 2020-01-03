@@ -1,7 +1,7 @@
 [package]
 name = "viperus"
 version = "0.1.0"
-authors = ["mauro cordioli"]
+authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,8 +12,9 @@ serde="*"
 serde_yaml="*"
 serde_json="*"
 toml="*"
-dirs="*"
-clap="*"
+dirs="~2.0.0"
+clap="~2.33.0"
+dotenv="~0.15.0"
  
 [dev-dependencies]
 env_logger = "*"
