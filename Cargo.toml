@@ -1,0 +1,19 @@
+[package]
+name = "viperus"
+version = "0.1.0"
+authors = ["mauro cordioli"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log="*"
+serde="*"
+serde_yaml="*"
+serde_json="*"
+toml="*"
+dirs="*"
+clap="*"
+ 
+[dev-dependencies]
+env_logger = "*"

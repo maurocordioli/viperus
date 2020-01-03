@@ -1,0 +1,1801 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .app {
+            margin: 10px;
+            padding: 0;
+        }
+        
+        .files-list {
+            margin: 10px 0 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .files-list__head {
+            border: 1px solid #999;
+        }
+        
+        .files-list__head>tr>th {
+            padding: 10px;
+            border: 1px solid #999;
+            text-align: left;
+            font-weight: normal;
+            background: #ddd;
+        }
+        
+        .files-list__body {}
+        
+        .files-list__file {
+            cursor: pointer;
+        }
+        
+        .files-list__file:hover {
+            background: #ccf;
+        }
+        
+        .files-list__file>td {
+            padding: 10px;
+            border: 1px solid #999;
+        }
+        
+        .files-list__file>td:first-child::before {
+            content: '\01F4C4';
+            margin-right: 1em;
+        }
+        
+        .files-list__file_low {
+            background: #fcc;
+        }
+        
+        .files-list__file_medium {
+            background: #ffc;
+        }
+        
+        .files-list__file_high {
+            background: #cfc;
+        }
+        
+        .files-list__file_folder>td:first-child::before {
+            content: '\01F4C1';
+            margin-right: 1em;
+        }
+        
+        .file-header {
+            border: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-header__back {
+            margin: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+            flex-grow: 0;
+            text-decoration: underline;
+            color: #338;
+        }
+        
+        .file-header__name {
+            margin: 10px;
+            flex-shrink: 2;
+            flex-grow: 2;
+        }
+        
+        .file-header__stat {
+            margin: 10px;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+        
+        .file-content {
+            margin: 10px 0 0;
+            border: 1px solid #999;
+            padding: 10px;
+        }
+        
+        .code-line {
+            margin: 0;
+            padding: 0.3em;
+            height: 1em;
+        }
+        
+        .code-line_covered {
+            background: #cfc;
+        }
+        
+        .code-line_uncovered {
+            background: #fcc;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script>
+        var data = {
+            "files": [{
+                "path": ["/", "mnt", "c", "lavori", "2020", "viperus", "src", "adapter.rs"],
+                "content": "use serde_yaml;\r\n\r\n#[derive(Debug)]\r\npub struct AdapterError;\r\n\r\nimpl From\u003cstd::io::Error\u003e for AdapterError {\r\n    fn from(src: std::io::Error) -\u003e Self {\r\n        todo!(\"conversion error {}\",src);\r\n        AdapterError {}\r\n    }\r\n}\r\n\r\nimpl From\u003cserde_yaml::Error\u003e for AdapterError {\r\n    fn from(src: serde_yaml::Error) -\u003e Self {\r\n        todo!(\"conversion error {}\",src);\r\n        AdapterError {}\r\n    }\r\n}\r\n\r\npub type AdapterResult\u003cT\u003e = Result\u003cT, AdapterError\u003e;\r\n\r\npub trait ConfigAdapter {\r\n    fn Parse(\u0026mut self) -\u003e AdapterResult\u003c()\u003e;\r\n    fn Map(\u0026self) -\u003e crate::map::Map;\r\n}\r\n\r\npub struct YamlAdapter {\r\n    source: String,\r\n    data: serde_yaml::Mapping,\r\n    config_map: crate::map::Map,\r\n}\r\n\r\nimpl YamlAdapter {\r\n    pub fn new() -\u003e Self {\r\n        YamlAdapter {\r\n            source: String::default(),\r\n            data: serde_yaml::Mapping::new(),\r\n            config_map: crate::map::Map::new(),\r\n        }\r\n    }\r\n\r\n    pub fn load_file(\u0026mut self, name: \u0026str) -\u003e AdapterResult\u003c()\u003e {\r\n        self.source = std::fs::read_to_string(name)?;\r\n\r\n        Ok(())\r\n    }\r\n\r\n    pub fn load_str(\u0026mut self, source: \u0026str) -\u003e AdapterResult\u003c()\u003e {\r\n        self.source = source.to_owned();\r\n\r\n        Ok(())\r\n    }\r\n}\r\nimpl ConfigAdapter for YamlAdapter {\r\n    fn Parse(\u0026mut self) -\u003e AdapterResult\u003c()\u003e {\r\n        self.data = serde_yaml::from_str::\u003cserde_yaml::Mapping\u003e(\u0026self.source)?;\r\n\r\n        Ok(())\r\n    }\r\n\r\n    fn Map(\u0026self) -\u003e crate::map::Map {\r\n        let mut res = crate::map::Map::new();\r\n\r\n        let mut kpath = String::default();\r\n\r\n        for (k, v) in self.data.iter() {\r\n            if let serde_yaml::Value::String(s) = k {\r\n                kpath = s.to_owned();\r\n\r\n                rec_yaml(\u0026mut res, \u0026kpath, \u0026v);\r\n            }\r\n        }\r\n\r\n        res\r\n    }\r\n}\r\n\r\nfn rec_yaml(config_map: \u0026mut crate::map::Map, kpath: \u0026str, v: \u0026serde_yaml::Value) {\r\n    debug!(\"{:?} =\u003e {:?}\", kpath, v);\r\n\r\n    match v {\r\n        serde_yaml::Value::Mapping(m) =\u003e {\r\n            for (kk, vv) in m {\r\n                if let serde_yaml::Value::String(s) = kk {\r\n                    let kk = format!(\"{}.{}\", kpath, s);\r\n                    rec_yaml(config_map, \u0026kk, vv);\r\n                }\r\n            }\r\n        }\r\n\r\n        serde_yaml::Value::Sequence(m) =\u003e {\r\n            for vv in m {\r\n                let kk = format!(\"{}\", kpath);\r\n                rec_yaml(config_map, \u0026kk, vv);\r\n            }\r\n        }\r\n        serde_yaml::Value::String(s) =\u003e {\r\n            config_map.add(kpath, s.clone());\r\n        }\r\n\r\n        serde_yaml::Value::Bool(b) =\u003e {\r\n            config_map.add(kpath, *b);\r\n        }\r\n\r\n        _ =\u003e (),\r\n    }\r\n}\r\n\r\n\r\n\r\n\r\npub struct JsonAdapter {\r\n    source: String,\r\n    data: serde_json::Map::\u003cString,serde_json::Value\u003e,\r\n    config_map: crate::map::Map,\r\n}\r\n\r\nimpl JsonAdapter {\r\n    pub fn new() -\u003e Self {\r\n        JsonAdapter {\r\n            source: String::default(),\r\n            data: serde_json::Map::new(),\r\n            config_map: crate::map::Map::new(),\r\n        }\r\n    }\r\n\r\n    pub fn load_file(\u0026mut self, name: \u0026str) -\u003e AdapterResult\u003c()\u003e {\r\n        self.source = std::fs::read_to_string(name)?;\r\n\r\n        Ok(())\r\n    }\r\n\r\n    pub fn load_str(\u0026mut self, source: \u0026str) -\u003e AdapterResult\u003c()\u003e {\r\n        self.source = source.to_owned();\r\n\r\n        Ok(())\r\n    }\r\n}\r\nimpl ConfigAdapter for JsonAdapter {\r\n    fn Parse(\u0026mut self) -\u003e AdapterResult\u003c()\u003e {\r\n        self.data = serde_json::from_str::\u003cserde_json::Map\u003cString,serde_json::Value\u003e\u003e(\u0026self.source).unwrap();\r\n\r\n        Ok(())\r\n    }\r\n\r\n    fn Map(\u0026self) -\u003e crate::map::Map {\r\n        let mut res = crate::map::Map::new();\r\n\r\n        let mut kpath = String::default();\r\n\r\n        for (k, v) in self.data.iter() {\r\n            \r\n                kpath = k.to_owned();\r\n\r\n                rec_json(\u0026mut res, \u0026kpath, v);\r\n            \r\n        }\r\n\r\n        res\r\n    }\r\n}\r\n\r\n\r\nfn rec_json(config_map: \u0026mut crate::map::Map, kpath: \u0026str, v: \u0026serde_json::Value) {\r\n    debug!(\"{:?} =\u003e {:?}\", kpath, v);\r\n\r\n    match v {\r\n        serde_json::Value::Object(m) =\u003e {\r\n            for (kk, vv) in m {\r\n               \r\n                    let kk = format!(\"{}.{}\", kpath, kk);\r\n                    rec_json(config_map, \u0026kk, vv);\r\n                \r\n            }\r\n        }\r\n\r\n        \r\n        serde_json::Value::String(s) =\u003e {\r\n            config_map.add(kpath, s.clone());\r\n        }\r\n\r\n        serde_json::Value::Bool(b) =\u003e {\r\n            config_map.add(kpath, *b);\r\n        }\r\n\r\n        _ =\u003e (),\r\n    }\r\n}\r\n",
+                "traces": [{
+                    "line": 7,
+                    "address": 4250064,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 8,
+                    "address": 4250071,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 14,
+                    "address": 4250400,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 15,
+                    "address": 4250417,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 34,
+                    "address": 4250736,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 36,
+                    "address": 4250746,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 37,
+                    "address": 4250790,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 38,
+                    "address": 4250802,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 42,
+                    "address": 4250976,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 43,
+                    "address": 4250998,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 45,
+                    "address": 4251534,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 48,
+                    "address": 4251616,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 49,
+                    "address": 4251635,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 51,
+                    "address": 4251732,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 55,
+                    "address": 4251776,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 56,
+                    "address": 4251788,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 58,
+                    "address": 4252438,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 61,
+                    "address": 4252528,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 62,
+                    "address": 4252543,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 64,
+                    "address": 4252604,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 66,
+                    "address": 4252611,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 67,
+                    "address": 4252963,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 68,
+                    "address": 4253006,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 70,
+                    "address": 4253053,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 74,
+                    "address": 4252802,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 78,
+                    "address": 4253360,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 79,
+                    "address": 4253406,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 81,
+                    "address": 4254096,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 82,
+                    "address": 4253889,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 83,
+                    "address": 4253973,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 84,
+                    "address": 4254199,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 85,
+                    "address": 4254251,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 86,
+                    "address": 4254507,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 91,
+                    "address": 4254616,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 92,
+                    "address": 4254638,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 93,
+                    "address": 4254796,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 94,
+                    "address": 4254952,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 97,
+                    "address": 4255059,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 98,
+                    "address": 4255081,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 101,
+                    "address": 4255196,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 102,
+                    "address": 4255218,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 119,
+                    "address": 4255328,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 121,
+                    "address": 4255338,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 122,
+                    "address": 4255379,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 123,
+                    "address": 4255391,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 127,
+                    "address": 4255552,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 128,
+                    "address": 4255574,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 130,
+                    "address": 4256110,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 133,
+                    "address": 4256192,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 134,
+                    "address": 4256211,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 136,
+                    "address": 4256308,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 140,
+                    "address": 4256352,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 141,
+                    "address": 4256361,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 143,
+                    "address": 4256505,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 146,
+                    "address": 4256544,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 147,
+                    "address": 4256559,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 149,
+                    "address": 4256620,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 151,
+                    "address": 4256627,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 153,
+                    "address": 4256963,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 155,
+                    "address": 4257010,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 159,
+                    "address": 4256802,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 164,
+                    "address": 4257312,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 165,
+                    "address": 4257358,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 167,
+                    "address": 4257997,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 168,
+                    "address": 4257801,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 169,
+                    "address": 4257890,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 171,
+                    "address": 4258107,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 172,
+                    "address": 4258345,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 178,
+                    "address": 4258452,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 179,
+                    "address": 4258474,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 182,
+                    "address": 4258587,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 183,
+                    "address": 4258609,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }],
+                "covered": 62,
+                "coverable": 72
+            }, {
+                "path": ["/", "mnt", "c", "lavori", "2020", "viperus", "src", "lib.rs"],
+                "content": "extern crate serde;\nextern crate serde_yaml;\n#[macro_use]\nextern crate log;\nextern crate dirs;\nmod adapter;\nmod map;\nuse std::env;\nuse std::io::{Error, ErrorKind};\nuse std::path;\n\nuse adapter::ConfigAdapter;\n\nmacro_rules! path { \n    ( $ x : expr ) =\u003e  (format!(\"{}\",$x));\n    ( $ x: expr, $($y:expr),+) =\u003e  (format!(\"{}{}{}\",$x,std::path::MAIN_SEPARATOR,path!($($y),+)))\n     \n}\n\n#[derive(Debug, Clone, Copy)]\npub enum Format {\n    Auto,\n    YAML,\n    JSON,\n    TOML,\n    ENV,\n}\n\n#[derive(Debug)]\npub struct Viperus {\n    config_map: map::Map,\n    override_map: map::Map,\n}\n\nimpl Viperus {\n    fn new() -\u003e Self {\n        Viperus {\n            config_map: map::Map::new(),\n            override_map: map::Map::new(),\n        }\n    }\n\n    pub fn load_file(\u0026mut self, name: \u0026str, format: Format) -\u003e Result\u003c(), Error\u003e {\n        debug!(\"loading  {}\", name);\n     \n        match format {\n            Format::YAML =\u003e {\n                let mut adt = adapter::YamlAdapter::new();\n                adt.load_file(name).unwrap();\n                self.load_adapter(\u0026mut adt);\n            },\n            Format::JSON =\u003e {\n                let mut adt = adapter::JsonAdapter::new();\n                adt.load_file(name).unwrap();\n                self.load_adapter(\u0026mut adt);\n            },\n           \n            _ =\u003e {\n                return Result::Err(Error::new(ErrorKind::Other, \"Format not implemented\"));\n            }\n        };\n\n        Ok(())\n    }\n\n    pub fn load_adapter(\u0026mut self, adt: \u0026mut dyn adapter::ConfigAdapter) -\u003e Result\u003c(), Error\u003e {\n        adt.Parse().unwrap();\n        self.config_map.merge(\u0026adt.Map());\n        Ok(())\n    }\n\n    pub fn get\u003c'a, T\u003e(\u0026'a mut self, key: \u0026'a str) -\u003e Option\u003cT\u003e\n    where\n        map::MapValue: From\u003cT\u003e,\n        \u0026'a map::MapValue: Into\u003cT\u003e,\n    {\n        self.override_map.get(key)\n    }\n\n    pub fn add\u003c'a, T\u003e(\u0026'a mut self, key: \u0026'a str, value: T) -\u003e Option\u003cT\u003e\n    where\n        map::MapValue: From\u003cT\u003e,\n        map::MapValue: Into\u003cT\u003e,\n    {\n        self.override_map.add(key, value)\n    }\n}\n\n#[cfg(test)]\nmod tests {\n    use super::map::*;\n    use super::*;\n\n    fn init() {\n        let _ = env_logger::builder().is_test(true).try_init();\n    }\n\n    #[test]\n    fn it_works() {\n        init();\n        let mut v = Viperus::new();\n        v.load_file(\u0026path!(\".\",\"assets\",\"test.yaml\"), Format::YAML).unwrap();\n        v.load_file(\u0026path!(\".\",\"assets\",\"test.json\"), Format::JSON).unwrap();\n       \n        //v.load_file(\"asset\\test.env\", Format::JSON).unwrap();\n        v.add(\"service.url\", String::from(\"http://example.com\"));\n        debug!(\"final {:?}\", v);\n\n        let s: \u0026str = v.get(\"service.url\").unwrap();\n        assert_eq!(\"http://example.com\", s);\n    }\n}\n",
+                "traces": [{
+                    "line": 36,
+                    "address": 4333376,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 38,
+                    "address": 4333386,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 39,
+                    "address": 4333431,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 43,
+                    "address": 4333552,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 44,
+                    "address": 4333589,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 46,
+                    "address": 4334156,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 47,
+                    "address": 4333924,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 48,
+                    "address": 4334014,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 49,
+                    "address": 4334027,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 50,
+                    "address": 4334093,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 52,
+                    "address": null,
+                    "length": 0,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 53,
+                    "address": 4334161,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 54,
+                    "address": 4334174,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 55,
+                    "address": 4334240,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 58,
+                    "address": null,
+                    "length": 0,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 59,
+                    "address": 4333971,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 63,
+                    "address": 4334353,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 66,
+                    "address": 4334400,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 67,
+                    "address": 4334425,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 68,
+                    "address": 4334486,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 69,
+                    "address": 4334558,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 72,
+                    "address": 4231920,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 77,
+                    "address": 4231939,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 80,
+                    "address": 4232000,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 85,
+                    "address": 4232022,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 94,
+                    "address": 4213712,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 95,
+                    "address": 4213719,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 99,
+                    "address": 4211296,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 100,
+                    "address": 4213847,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 101,
+                    "address": 4213869,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 102,
+                    "address": 4213882,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 103,
+                    "address": 4215182,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 106,
+                    "address": 4216464,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 107,
+                    "address": 4216549,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 109,
+                    "address": 4216935,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 110,
+                    "address": 4217025,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }],
+                "covered": 33,
+                "coverable": 36
+            }, {
+                "path": ["/", "mnt", "c", "lavori", "2020", "viperus", "src", "map", "map_value.rs"],
+                "content": "\r\n#[derive(Debug, PartialEq,Clone)]\r\npub enum MapValue {\r\n    Empty,\r\n    Str(String),\r\n    I32(i32),\r\n    BOOL(bool),\r\n}\r\n\r\nimpl Into\u003cbool\u003e for \u0026MapValue {\r\n    fn into(self) -\u003e bool {\r\n        if let MapValue::BOOL(i) = self {\r\n            *i\r\n        } else {\r\n            panic!(\"not a bool\")\r\n        }\r\n    }\r\n}\r\n\r\nimpl Into\u003cbool\u003e for MapValue {\r\n    fn into(self) -\u003e bool {\r\n        if let MapValue::BOOL(i) = self {\r\n            i\r\n        } else {\r\n            panic!(\"not a bool\")\r\n        }\r\n    }\r\n}\r\n\r\nimpl From\u003cbool\u003e for MapValue {\r\n    fn from(src: bool) -\u003e MapValue {\r\n        MapValue::BOOL(src)\r\n    }\r\n}\r\n\r\nimpl From\u003ci32\u003e for MapValue {\r\n    fn from(src: i32) -\u003e MapValue {\r\n        MapValue::I32(src)\r\n    }\r\n}\r\n\r\nimpl Into\u003ci32\u003e for \u0026MapValue {\r\n    fn into(self) -\u003e i32 {\r\n        if let MapValue::I32(i) = self {\r\n            *i\r\n        } else {\r\n            panic!(\"nnot an i32\")\r\n        }\r\n    }\r\n}\r\n\r\nimpl Into\u003ci32\u003e for MapValue {\r\n    fn into(self) -\u003e i32 {\r\n        if let MapValue::I32(i) = self {\r\n            i\r\n        } else {\r\n            panic!(\"nnot an i32\")\r\n        }\r\n    }\r\n}\r\n\r\nimpl Into\u003cString\u003e for MapValue {\r\n    fn into(self) -\u003e String {\r\n        if let MapValue::Str(i) = self {\r\n            i\r\n        } else {\r\n            panic!(\"not a string\")\r\n        }\r\n    }\r\n}\r\n \r\n\r\nimpl From\u003cString\u003e for MapValue {\r\n    fn from(src: String) -\u003e MapValue {\r\n        MapValue::Str(src)\r\n    }\r\n}\r\n\r\nimpl\u003c'a\u003e From\u003c\u0026'a String\u003e for MapValue {\r\n    fn from(src: \u0026'a String) -\u003e MapValue {\r\n        MapValue::Str(src.clone())\r\n    }\r\n}\r\n\r\nimpl From\u003c\u0026str\u003e for MapValue {\r\n    fn from(src: \u0026str) -\u003e MapValue {\r\n        MapValue::Str(src.to_owned())\r\n    }\r\n}\r\n\r\nimpl\u003c'a\u003e Into\u003c\u0026'a str\u003e for \u0026'a MapValue {\r\n    fn into(self) -\u003e \u0026'a str {\r\n        if let MapValue::Str(i) = self {\r\n            i\r\n        } else {\r\n            panic!(\"not an str\")\r\n        }\r\n    }\r\n}\r\n",
+                "traces": [{
+                    "line": 11,
+                    "address": 4335312,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 12,
+                    "address": 4335321,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 13,
+                    "address": 4335383,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 15,
+                    "address": 4335337,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 21,
+                    "address": 4335408,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 22,
+                    "address": 4335412,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 23,
+                    "address": 4335487,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 25,
+                    "address": 4335442,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 31,
+                    "address": 4335552,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 32,
+                    "address": 4335567,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 37,
+                    "address": 4335584,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 38,
+                    "address": 4335594,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 43,
+                    "address": 4335616,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 44,
+                    "address": 4335625,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 45,
+                    "address": 4335687,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 47,
+                    "address": 4335641,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 53,
+                    "address": 4335712,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 54,
+                    "address": 4335716,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 55,
+                    "address": 4335788,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 57,
+                    "address": 4335746,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 63,
+                    "address": 4335840,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 64,
+                    "address": 4335847,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 65,
+                    "address": 4335949,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 67,
+                    "address": 4335887,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 74,
+                    "address": 4336048,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 75,
+                    "address": 4336055,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 80,
+                    "address": 4336128,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 81,
+                    "address": 4336140,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 86,
+                    "address": 4336224,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 87,
+                    "address": 4336241,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 92,
+                    "address": 4336320,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 93,
+                    "address": 4336329,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 94,
+                    "address": 4336391,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 96,
+                    "address": 4336345,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }],
+                "covered": 14,
+                "coverable": 34
+            }, {
+                "path": ["/", "mnt", "c", "lavori", "2020", "viperus", "src", "map.rs"],
+                "content": "use std::collections::HashMap;\r\n\r\nmod map_value;\r\npub use map_value::MapValue;\r\n\r\n#[derive(Debug)]\r\npub struct Map {\r\n    data: HashMap\u003cString, MapValue\u003e,\r\n}\r\n\r\n\r\nimpl Map {\r\n    pub fn new() -\u003e Self {\r\n        Map {\r\n            data: HashMap::new(),\r\n        }\r\n    }\r\n\r\n    pub fn add\u003cT\u003e(\u0026mut self, key: \u0026str, value: T) -\u003e Option\u003cT\u003e\r\n    where\r\n        MapValue: From\u003cT\u003e,\r\n        MapValue: Into\u003cT\u003e,\r\n    {\r\n        match self.data.insert(key.to_string(), MapValue::from(value)) {\r\n            None =\u003e None,\r\n            Some(mv) =\u003e Some(mv.into()),\r\n        }\r\n    }\r\n\r\n    pub fn add_value(\u0026mut self, key: \u0026str, value: MapValue) -\u003e Option\u003cMapValue\u003e {\r\n        self.data.insert(key.to_string(), value)\r\n        //     let path: Vec\u003c\u0026str\u003e=key.to_lowercase().split(\".\").collect();\r\n        //     let pathLen = path.len();\r\n        //    for pi  in 0..pathLen-1 {\r\n        //        let v = self.data.get(path[pi]);\r\n        //        if let None = v {\r\n        //            let node=\r\n\r\n        //        }\r\n\r\n        //    }\r\n\r\n        //     todo!(\"imlp add a key to the map\")\r\n    }\r\n\r\n    pub fn get_value(\u0026self, key: \u0026str) -\u003e Option\u003c\u0026MapValue\u003e {\r\n        self.data.get(key)\r\n    }\r\n\r\n    pub fn get\u003c'a, T\u003e(\u0026'a mut self, key: \u0026'a str) -\u003e Option\u003cT\u003e\r\n    where\r\n        MapValue: From\u003cT\u003e,\r\n        \u0026'a MapValue: Into\u003cT\u003e,\r\n    {\r\n        match self.data.get(key) {\r\n            None =\u003e None,\r\n            Some(mv) =\u003e Some(mv.into()),\r\n        }\r\n    }\r\n\r\n    pub fn get_i32(\u0026self, key: \u0026str) -\u003e Option\u003ci32\u003e {\r\n        let res = self.data.get(key);\r\n\r\n        match res {\r\n            None =\u003e None,\r\n            Some(mv) =\u003e match mv {\r\n                MapValue::I32(arg) =\u003e Some(*arg),\r\n                _ =\u003e None,\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n    pub fn merge(\u0026mut self, src: \u0026Map)  {\r\n         \r\n        for (k,v) in \u0026src.data {\r\n\r\n            self.add_value(k, v.clone());\r\n\r\n        }\r\n\r\n    }\r\n\r\n\r\n}\r\n\r\n#[cfg(test)]\r\nmod tests {\r\n    use super::*;\r\n    #[test]\r\n    fn test_map_add_get() {\r\n        let mut m = Map::new();\r\n        let mv0 = m.add_value(\"test.value\", MapValue::I32(10));\r\n        assert_eq!(None, mv0);\r\n        let mv1 = m.get_value(\"test.value\").unwrap();\r\n        if let MapValue::I32(v1) = mv1 {\r\n            assert_eq!(10, *v1);\r\n        } else {\r\n            panic!(\"not a integer\");\r\n        }\r\n    }\r\n\r\n    #[test]\r\n    fn test_map_get_32() {\r\n        let mut m = Map::new();\r\n        m.add_value(\"test.value2\", MapValue::from(\"none\"));\r\n\r\n        let mv0 = m.add_value(\"test.value\", MapValue::from(42));\r\n        assert_eq!(None, mv0);\r\n        let mv1 = m.get_i32(\"test.value\").unwrap();\r\n        assert_eq!(42, mv1);\r\n\r\n        let _a1 = m.add::\u003ci32\u003e(\"test.value_i32\", 314).unwrap_or_default();\r\n        let v1 = m.get::\u003ci32\u003e(\"test.value\").unwrap();\r\n        assert_eq!(42, v1);\r\n\r\n        let v1_i32 = m.get::\u003ci32\u003e(\"test.value_i32\").unwrap();\r\n        assert_eq!(314, v1_i32);\r\n\r\n        let v1_str = m.get::\u003c\u0026str\u003e(\"test.value2\").unwrap();\r\n        assert_eq!(\"none\", v1_str);\r\n\r\n        if let None = m.get_i32(\"test.value2\") {\r\n            assert!(true);\r\n        } else {\r\n            panic!(\"got an int from a string\");\r\n        }\r\n    }\r\n}\r\n",
+                "traces": [{
+                    "line": 13,
+                    "address": 4285408,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 15,
+                    "address": 4285415,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 19,
+                    "address": 4286464,
+                    "length": 1,
+                    "stats": {
+                        "Line": 3
+                    }
+                }, {
+                    "line": 24,
+                    "address": 4286493,
+                    "length": 1,
+                    "stats": {
+                        "Line": 3
+                    }
+                }, {
+                    "line": 25,
+                    "address": 4286659,
+                    "length": 1,
+                    "stats": {
+                        "Line": 3
+                    }
+                }, {
+                    "line": 26,
+                    "address": 4286729,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 30,
+                    "address": 4285472,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 31,
+                    "address": 4285497,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 46,
+                    "address": 4285680,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 47,
+                    "address": 4285699,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 50,
+                    "address": 4288352,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 55,
+                    "address": 4288371,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 56,
+                    "address": 4288399,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 57,
+                    "address": 4288433,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 61,
+                    "address": 4285744,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 62,
+                    "address": 4285762,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 64,
+                    "address": 4285811,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 65,
+                    "address": 4285789,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 66,
+                    "address": 4285823,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 67,
+                    "address": 4285833,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 68,
+                    "address": 4285849,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 74,
+                    "address": 4285920,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 76,
+                    "address": 4285937,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 78,
+                    "address": 4286132,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 91,
+                    "address": 4217760,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 92,
+                    "address": 4291479,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 93,
+                    "address": 4291509,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 94,
+                    "address": 4291571,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 95,
+                    "address": 4291706,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 96,
+                    "address": 4292073,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 97,
+                    "address": 4292155,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 99,
+                    "address": 4292092,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }, {
+                    "line": 104,
+                    "address": 4217792,
+                    "length": 1,
+                    "stats": {
+                        "Line": 2
+                    }
+                }, {
+                    "line": 105,
+                    "address": 4292647,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 106,
+                    "address": 4292677,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 108,
+                    "address": 4292790,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 109,
+                    "address": 4292840,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 110,
+                    "address": 4292966,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 111,
+                    "address": 4293397,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 113,
+                    "address": 4293487,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 114,
+                    "address": 4293924,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 115,
+                    "address": 4294014,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 117,
+                    "address": 4294104,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 118,
+                    "address": 4294543,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 120,
+                    "address": 4294633,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 121,
+                    "address": 4295048,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 123,
+                    "address": 4295152,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 124,
+                    "address": 4295567,
+                    "length": 1,
+                    "stats": {
+                        "Line": 1
+                    }
+                }, {
+                    "line": 126,
+                    "address": 4295535,
+                    "length": 1,
+                    "stats": {
+                        "Line": 0
+                    }
+                }],
+                "covered": 45,
+                "coverable": 49
+            }]
+        };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+    <script>
+        const e = React.createElement;
+
+        function pathToString(path) {
+            if (path[0] === '/') {
+                return '/' + path.slice(1).join('/');
+            } else {
+                return path.join('/');
+            }
+        }
+
+        function findCommonPath(files) {
+            if (!files || !files.length) {
+                return [];
+            }
+
+            function isPrefix(arr, prefix) {
+                if (arr.length < prefix.length) {
+                    return false;
+                }
+                for (let i = prefix.length - 1; i >= 0; --i) {
+                    if (arr[i] !== prefix[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            let commonPath = files[0].path.slice(0, -1);
+            while (commonPath.length) {
+                if (files.every(file => isPrefix(file.path, commonPath))) {
+                    break;
+                }
+                commonPath.pop();
+            }
+            return commonPath;
+        }
+
+        function findFolders(files) {
+            if (!files || !files.length) {
+                return [];
+            }
+
+            let folders = files.filter(file => file.path.length > 1).map(file => file.path[0]);
+            folders = [...new Set(folders)]; // unique
+            folders.sort();
+
+            folders = folders.map(folder => {
+                let filesInFolder = files
+                    .filter(file => file.path[0] === folder)
+                    .map(file => ({
+                        ...file,
+                        path: file.path.slice(1),
+                        parent: [...file.parent, file.path[0]],
+                    }));
+
+                const children = findFolders(filesInFolder); // recursion
+
+                return {
+                    is_folder: true,
+                    path: [folder],
+                    parent: files[0].parent,
+                    children,
+                    covered: children.reduce((sum, file) => sum + file.covered, 0),
+                    coverable: children.reduce((sum, file) => sum + file.coverable, 0),
+                };
+            });
+
+            return [
+                ...folders,
+                ...files.filter(file => file.path.length === 1),
+            ];
+        }
+
+        class App extends React.Component {
+            constructor(...args) {
+                super(...args);
+
+                this.state = {
+                    current: [],
+                };
+            }
+
+            componentDidMount() {
+                this.updateStateFromLocation();
+                window.addEventListener("hashchange", () => this.updateStateFromLocation(), false);
+            }
+
+            updateStateFromLocation() {
+                if (window.location.hash.length > 1) {
+                    const current = window.location.hash.substr(1).split('/');
+                    this.setState({
+                        current
+                    });
+                } else {
+                    this.setState({
+                        current: []
+                    });
+                }
+            }
+
+            getCurrentPath() {
+                let file = this.props.root;
+                let path = [file];
+                for (let p of this.state.current) {
+                    file = file.children.find(file => file.path[0] === p);
+                    if (!file) {
+                        return path;
+                    }
+                    path.push(file);
+                }
+                return path;
+            }
+
+            render() {
+                const path = this.getCurrentPath();
+                const file = path[path.length - 1];
+
+                let w = null;
+                if (file.is_folder) {
+                    w = e(FilesList, {
+                        folder: file,
+                        onSelectFile: this.selectFile.bind(this),
+                        onBack: path.length > 1 ? this.back.bind(this) : null,
+                    });
+                } else {
+                    w = e(DisplayFile, {
+                        file,
+                        onBack: this.back.bind(this),
+                    });
+                }
+
+                return e('div', {
+                    className: 'app'
+                }, w);
+            }
+
+            selectFile(file) {
+                this.setState(({
+                    current
+                }) => {
+                    return {
+                        current: [...current, file.path[0]]
+                    };
+                }, () => this.updateHash());
+            }
+
+            back(file) {
+                this.setState(({
+                    current
+                }) => {
+                    return {
+                        current: current.slice(0, current.length - 1)
+                    };
+                }, () => this.updateHash());
+            }
+
+            updateHash() {
+                if (!this.state.current || !this.state.current.length) {
+                    window.location = '#';
+                } else {
+                    window.location = '#' + this.state.current.join('/');
+                }
+            }
+        }
+
+        function FilesList({
+            folder,
+            onSelectFile,
+            onBack
+        }) {
+            let files = folder.children;
+            return e('div', {
+                    className: 'display-folder'
+                },
+                e(FileHeader, {
+                    file: folder,
+                    onBack
+                }),
+                e('table', {
+                        className: 'files-list'
+                    },
+                    e('thead', {
+                            className: 'files-list__head'
+                        },
+                        e('tr', null,
+                            e('th', null, "Path"),
+                            e('th', null, "Coverage")
+                        )
+                    ),
+                    e('tbody', {
+                            className: 'files-list__body'
+                        },
+                        files.map(file => e(File, {
+                            file,
+                            onClick: onSelectFile
+                        }))
+                    )
+                )
+            );
+        }
+
+        function File({
+            file,
+            onClick
+        }) {
+            const coverage = file.coverable ? file.covered / file.coverable * 100 : -1;
+
+            return e('tr', {
+                    className: 'files-list__file' +
+                        (coverage >= 0 && coverage < 50 ? ' files-list__file_low' : '') +
+                        (coverage >= 50 && coverage < 80 ? ' files-list__file_medium' : '') +
+                        (coverage >= 80 ? ' files-list__file_high' : '') +
+                        (file.is_folder ? ' files-list__file_folder' : ''),
+                    onClick: () => onClick(file),
+                },
+                e('td', null, pathToString(file.path)),
+                e('td', null,
+                    file.covered + ' / ' + file.coverable +
+                    (coverage >= 0 ? ' (' + coverage.toFixed(2) + '%)' : '')
+                )
+            );
+        }
+
+        function DisplayFile({
+            file,
+            onBack
+        }) {
+            return e('div', {
+                    className: 'display-file'
+                },
+                e(FileHeader, {
+                    file,
+                    onBack
+                }),
+                e(FileContent, {
+                    file
+                })
+            );
+        }
+
+        function FileHeader({
+            file,
+            onBack
+        }) {
+            return e('div', {
+                    className: 'file-header'
+                },
+                onBack ? e('a', {
+                    className: 'file-header__back',
+                    onClick: onBack
+                }, 'Back') : null,
+                e('div', {
+                    className: 'file-header__name'
+                }, pathToString([...file.parent, ...file.path])),
+                e('div', {
+                        className: 'file-header__stat'
+                    },
+                    'Covered: ' + file.covered + ' of ' + file.coverable +
+                    (file.coverable ? ' (' + (file.covered / file.coverable * 100).toFixed(2) + '%)' : '')
+                )
+            );
+        }
+
+        function FileContent({
+            file
+        }) {
+            return e('div', {
+                    className: 'file-content'
+                },
+                file.content.split(/\r?\n/).map((line, index) => {
+                    const trace = file.traces.find(trace => trace.line === index + 1);
+                    const covered = trace && trace.stats.Line;
+                    const uncovered = trace && !trace.stats.Line;
+                    return e('pre', {
+                        className: 'code-line' +
+                            (covered ? ' code-line_covered' : '') +
+                            (uncovered ? ' code-line_uncovered' : ''),
+                        title: trace ? JSON.stringify(trace.stats, null, 2) : null,
+                    }, line);
+                })
+            );
+        }
+
+        (function() {
+            const commonPath = findCommonPath(data.files);
+            const files = data.files.map(file => ({...file,
+                path: file.path.slice(commonPath.length),
+                parent: commonPath
+            }));
+            const children = findFolders(files);
+
+            const root = {
+                is_folder: true,
+                children,
+                path: commonPath,
+                parent: [],
+                covered: children.reduce((sum, file) => sum + file.covered, 0),
+                coverable: children.reduce((sum, file) => sum + file.coverable, 0),
+            };
+
+            ReactDOM.render(e(App, {
+                root
+            }), document.getElementById('root'));
+        }());
+    </script>
+</body>
+
+</html>

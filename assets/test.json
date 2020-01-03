@@ -1,0 +1,10 @@
+{
+    "parameter1": "uno",
+    "sub1": {
+        "alfa": "a"
+    },
+    "level1": {
+        "key3": false,
+        "key4": true
+    }
+}

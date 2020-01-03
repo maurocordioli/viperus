@@ -1,0 +1,8 @@
+level1:
+  key1: val1
+  key2: 1
+  key3: true
+  level2:
+    - list1: v1 
+    - list2: v2
+    - list3: true
