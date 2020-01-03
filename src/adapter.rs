@@ -11,7 +11,7 @@ pub trait ConfigAdapter {
 pub struct YamlAdapter {
     source: String,
     data: serde_yaml::Mapping,
-    config_map: crate::map::Map,
+    //config_map: crate::map::Map,
 }
 
 impl YamlAdapter {
@@ -19,7 +19,7 @@ impl YamlAdapter {
         YamlAdapter {
             source: String::default(),
             data: serde_yaml::Mapping::new(),
-            config_map: crate::map::Map::new(),
+            //config_map: crate::map::Map::new(),
         }
     }
 
@@ -45,7 +45,7 @@ impl ConfigAdapter for YamlAdapter {
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 
-        let mut kpath = String::default();
+        let mut kpath ;
 
         for (k, v) in self.data.iter() {
             if let serde_yaml::Value::String(s) = k {
@@ -74,7 +74,7 @@ fn rec_yaml(config_map: &mut crate::map::Map, kpath: &str, v: &serde_yaml::Value
 
         serde_yaml::Value::Sequence(m) => {
             for vv in m {
-                let kk = format!("{}", kpath);
+                let kk = kpath.to_string();
                 rec_yaml(config_map, &kk, vv);
             }
         }
@@ -93,7 +93,7 @@ fn rec_yaml(config_map: &mut crate::map::Map, kpath: &str, v: &serde_yaml::Value
 pub struct JsonAdapter {
     source: String,
     data: serde_json::Map<String, serde_json::Value>,
-    config_map: crate::map::Map,
+    //config_map: crate::map::Map,
 }
 
 impl JsonAdapter {
@@ -101,7 +101,7 @@ impl JsonAdapter {
         JsonAdapter {
             source: String::default(),
             data: serde_json::Map::new(),
-            config_map: crate::map::Map::new(),
+            //config_map: crate::map::Map::new(),
         }
     }
 
@@ -129,7 +129,7 @@ impl ConfigAdapter for JsonAdapter {
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 
-        let mut kpath = String::default();
+        let mut kpath;
 
         for (k, v) in self.data.iter() {
             kpath = k.to_owned();
@@ -167,7 +167,7 @@ fn rec_json(config_map: &mut crate::map::Map, kpath: &str, v: &serde_json::Value
 pub struct TomlAdapter {
     source: String,
     data: toml::map::Map<String, toml::Value>,
-    config_map: crate::map::Map,
+    //config_map: crate::map::Map,
 }
 
 impl TomlAdapter {
@@ -175,7 +175,7 @@ impl TomlAdapter {
         TomlAdapter {
             source: String::default(),
             data: toml::map::Map::new(),
-            config_map: crate::map::Map::new(),
+            //config_map: crate::map::Map::new(),
         }
     }
 
@@ -270,11 +270,9 @@ impl ConfigAdapter for EnvAdapter {
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 
-        let mut kpath = String::default();
-
+     
         for (k, v) in self.data.iter() {
-            kpath = k.to_owned();
-
+            
             res.add(k, v.to_owned());
         }
 
@@ -286,7 +284,7 @@ impl ConfigAdapter for EnvAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::map::*;
+   
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -298,7 +296,7 @@ mod tests {
 
         let mut a = JsonAdapter::new();
         a.load_str("{ \"json\": true }").unwrap();
-        a.parse();
+        a.parse().unwrap();
 
         let map = a.get_map();
         let jtrue = map.get::<bool>("json").unwrap();

@@ -59,15 +59,6 @@ impl Into<i32> for MapValue {
     }
 }
 
-impl Into<String> for MapValue {
-    fn into(self) -> String {
-        if let MapValue::Str(i) = self {
-            i
-        } else {
-            panic!("not a string")
-        }
-    }
-}
  
 
 impl From<String> for MapValue {
@@ -97,3 +88,25 @@ impl<'a> Into<&'a str> for &'a MapValue {
         }
     }
 }
+
+impl<'a> Into<String> for &'a MapValue {
+     fn into(self) -> String {
+         if let MapValue::Str(i) = self {
+             i.clone()
+         } else {
+             panic!("not an str")
+         }
+     }
+ }
+
+impl Into<String> for MapValue {
+    fn into(self) -> String {
+        if let MapValue::Str(i) = self {
+            i
+        } else {
+            panic!("not a string")
+        }
+    }
+}
+
+

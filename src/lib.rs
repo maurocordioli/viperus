@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 extern crate serde;
 extern crate serde_yaml;
 #[macro_use]
@@ -5,10 +7,8 @@ extern crate log;
 extern crate dirs;
 mod adapter;
 mod map;
-use std::fmt::Display;
-use std::env;
+use std::fmt::Display; 
 use std::error::{Error};
-use std::path;
 use clap;
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl<'v> Viperus<'v> {
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(),Box<dyn Error>> {
         debug!("loading  {}", name);
      
-       return  match format {
+       match format {
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
                 adt.load_file(name).unwrap();
@@ -95,9 +95,9 @@ impl<'v> Viperus<'v> {
             },
                         
         _ => {
-                Result::Err(Box::new(ViperusError::Generic("Format not implemented".to_owned())))
+              Err::<(),Box<dyn Error>>(Box::new(ViperusError::Generic("Format not implemented".to_owned())))
             }
-        };
+        }
 
     
     }
@@ -111,7 +111,9 @@ impl<'v> Viperus<'v> {
     pub fn get<'a, T>(&'a self, key: &'a str) -> Option<T>
     where
         map::MapValue: From<T>,
-        &'a map::MapValue: Into<T>,  
+        &'a map::MapValue: Into<T>,
+        map::MapValue: Into<T>,
+       
     {
 
        let res= self.override_map.get(key);
@@ -124,15 +126,18 @@ impl<'v> Viperus<'v> {
        let src= self.clap_bonds.get::<String>(&key.to_owned());
        if let Some(dst) = src {
         
-         let v=self.clap_matches.value_of(dst);
+         let res=self.clap_matches.value_of(dst);
 
          if let Some(v) = res {
-   
-           return Some(v)
+            
+            let mv=&map::MapValue::Str(v.to_owned());
+
+           return Some(  mv.clone().into() );
    
          }
         }
-       
+
+      
        self.config_map.get(key)
 
     }
@@ -157,7 +162,7 @@ self.clap_bonds.insert(dst.to_owned(), src.to_owned())
 
 #[cfg(test)]
 mod tests {
-    use super::map::*;
+    use super::map::MapValue;
     use super::*;
 
     fn init() {
@@ -176,7 +181,7 @@ mod tests {
         v.add("service.url", String::from("http://example.com"));
         debug!("final {:?}", v);
 
-        let s: &str = v.get("service.url").unwrap();
+        let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
     }
 }
