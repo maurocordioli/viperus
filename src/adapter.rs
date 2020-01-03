@@ -1,24 +1,10 @@
 use serde_yaml;
 use toml;
+ 
 
-#[derive(Debug)]
-pub struct AdapterError;
 
-impl From<std::io::Error> for AdapterError {
-    fn from(src: std::io::Error) -> Self {
-        todo!("conversion error {}",src);
-        AdapterError {}
-    }
-}
 
-impl From<serde_yaml::Error> for AdapterError {
-    fn from(src: serde_yaml::Error) -> Self {
-        todo!("conversion error {}",src);
-        AdapterError {}
-    }
-}
-
-pub type AdapterResult<T> = Result<T, AdapterError>;
+pub type AdapterResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 pub trait ConfigAdapter {
     fn parse(&mut self) -> AdapterResult<()>;
@@ -228,7 +214,7 @@ impl ConfigAdapter for TomlAdapter {
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 
-        let mut kpath = String::default();
+        let mut kpath ;
 
         for (k, v) in self.data.iter() {
             
@@ -271,5 +257,33 @@ fn rec_toml(config_map: &mut crate::map::Map, kpath: &str, v: &toml::Value) {
         }
 
         _ => (),
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+ 
+    use super::*;
+    use crate::map::*;
+
+    fn init() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
+
+    #[test]
+    fn adapter_load() {
+        init();
+
+        let mut a=  JsonAdapter::new();
+        a.load_str("{ \"json\": true }").unwrap();
+        a.parse();
+        
+        let map=a.get_map();
+        let jtrue=map.get::<bool>("json").unwrap();
+        assert_eq!(jtrue,true);
+
+
     }
 }

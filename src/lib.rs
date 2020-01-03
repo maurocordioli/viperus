@@ -5,12 +5,25 @@ extern crate log;
 extern crate dirs;
 mod adapter;
 mod map;
+use std::fmt::Display;
 use std::env;
-use std::io::{Error, ErrorKind};
+use std::error::{Error};
 use std::path;
 use clap;
 
-use adapter::ConfigAdapter;
+#[derive(Debug)]
+pub enum ViperusError { Generic(String) }
+impl Error for ViperusError {}
+impl Display for ViperusError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter::<'_>) ->std::fmt::Result 
+    {
+        match &self {
+            ViperusError::Generic(s) => write!(formatter, "Generic Error: {}", s)
+                }
+    }
+
+}
+
 
 macro_rules! path { 
     ( $ x : expr ) =>  (format!("{}",$x));
@@ -47,7 +60,7 @@ impl<'v> Viperus<'v> {
 
    
 
-    pub fn load_clap(&mut self,matches:clap::ArgMatches<'v>) -> Result<(), Error> {
+    pub fn load_clap(&mut self,matches:clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
         
         self.clap_matches=matches;
@@ -55,7 +68,7 @@ impl<'v> Viperus<'v> {
         Ok(())
     }
 
-    pub fn load_file(&mut self, name: &str, format: Format) -> Result<(), Error> {
+    pub fn load_file(&mut self, name: &str, format: Format) -> Result<(),Box<dyn Error>> {
         debug!("loading  {}", name);
      
        return  match format {
@@ -75,14 +88,14 @@ impl<'v> Viperus<'v> {
                self.load_adapter(&mut adt)
                         }
         _ => {
-                Result::Err(Error::new(ErrorKind::Other, "Format not implemented"))
+                Result::Err(Box::new(ViperusError::Generic("Format not implemented".to_owned())))
             }
         };
 
     
     }
 
-    pub fn load_adapter(&mut self, adt: &mut dyn adapter::ConfigAdapter) -> Result<(), Error> {
+    pub fn load_adapter(&mut self, adt: &mut dyn adapter::ConfigAdapter) -> Result<(),Box<dyn  Error>> {
         adt.parse().unwrap();
         self.config_map.merge(&adt.get_map());
         Ok(())

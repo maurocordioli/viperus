@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 log="*"
-serde="*"
+serde="~1.0.0"
 serde_yaml="*"
 serde_json="*"
 toml="*"
