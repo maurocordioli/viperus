@@ -24,7 +24,7 @@ impl Display for ViperusError {
 
 }
 
-
+#[macro_export]
 macro_rules! path { 
     ( $ x : expr ) =>  (format!("{}",$x));
     ( $ x: expr, $($y:expr),+) =>  (format!("{}{}{}",$x,std::path::MAIN_SEPARATOR,path!($($y),+)))
@@ -48,6 +48,8 @@ pub struct Viperus<'a> {
     clap_bonds : std::collections::HashMap<String,String>,
 }
 
+impl<'v> Default for Viperus<'v> { fn default() -> Self {Viperus::new()  } }   
+
 impl<'v> Viperus<'v> {
     pub fn new() -> Self {
         Viperus {
@@ -58,7 +60,6 @@ impl<'v> Viperus<'v> {
         }
     }
 
-   
 
     pub fn load_clap(&mut self,matches:clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
@@ -162,7 +163,7 @@ self.clap_bonds.insert(dst.to_owned(), src.to_owned())
 
 #[cfg(test)]
 mod tests {
-    use super::map::MapValue;
+    use crate::map::MapValue;
     use super::*;
 
     fn init() {
@@ -182,6 +183,6 @@ mod tests {
         debug!("final {:?}", v);
 
         let s: String = v.get("service.url").unwrap();
-        assert_eq!("http://example.com", s);
+        assert_eq!("http://example.com", s); 
     }
 }

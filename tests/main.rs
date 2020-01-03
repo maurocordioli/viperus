@@ -64,13 +64,13 @@ fn test_main() {
     let mut v = viperus::Viperus::new();
     v.load_file(".env", viperus::Format::ENV).unwrap();
 
-    v.load_clap(matches);
+    v.load_clap(matches).expect("strange...");
     v.bond_clap("v", "verbose");
 
     v.add("verbose", true);
-    let fVerbose = v.get::<bool>("verbose").unwrap();
+    let f_verbose = v.get::<bool>("verbose").unwrap();
 
-    debug!("verbose {:?}", fVerbose);
+    debug!("verbose {:?}", f_verbose);
 
-    assert_eq!(true, fVerbose);
+    assert_eq!(true, f_verbose);
 }

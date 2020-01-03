@@ -9,6 +9,8 @@ pub struct Map {
 }
 
 
+impl Default for Map { fn default() -> Self {Map::new()  } }   
+
 impl Map {
     pub fn new() -> Self {
         Map {
@@ -120,10 +122,8 @@ mod tests {
         let v1_str = m.get::<&str>("test.value2").unwrap();
         assert_eq!("none", v1_str);
 
-        if let None = m.get_i32("test.value2") {
-            assert!(true);
-        } else {
-            panic!("got an int from a string");
-        }
+        assert!(m.get_i32("test.value2").is_none())
+        
+        
     }
 }
