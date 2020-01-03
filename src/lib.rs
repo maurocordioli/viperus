@@ -58,28 +58,28 @@ impl<'v> Viperus<'v> {
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(), Error> {
         debug!("loading  {}", name);
      
-        match format {
+       return  match format {
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
                 adt.load_file(name).unwrap();
-                self.load_adapter(&mut adt);
+                self.load_adapter(&mut adt)
             },
             Format::JSON => {
                 let mut adt = adapter::JsonAdapter::new();
                 adt.load_file(name).unwrap();
-                self.load_adapter(&mut adt);
+                self.load_adapter(&mut adt)
             },
             Format::TOML => {
                 let mut adt = adapter::TomlAdapter::new();
                 adt.load_file(name).unwrap();
-                self.load_adapter(&mut adt);
+               self.load_adapter(&mut adt)
                         }
         _ => {
-                return Result::Err(Error::new(ErrorKind::Other, "Format not implemented"));
+                Result::Err(Error::new(ErrorKind::Other, "Format not implemented"))
             }
         };
 
-        Ok(())
+    
     }
 
     pub fn load_adapter(&mut self, adt: &mut dyn adapter::ConfigAdapter) -> Result<(), Error> {
