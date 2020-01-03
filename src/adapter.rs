@@ -1,8 +1,5 @@
 use serde_yaml;
 use toml;
- 
-
-
 
 pub type AdapterResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -93,12 +90,9 @@ fn rec_yaml(config_map: &mut crate::map::Map, kpath: &str, v: &serde_yaml::Value
     }
 }
 
-
-
-
 pub struct JsonAdapter {
     source: String,
-    data: serde_json::Map::<String,serde_json::Value>,
+    data: serde_json::Map<String, serde_json::Value>,
     config_map: crate::map::Map,
 }
 
@@ -125,7 +119,9 @@ impl JsonAdapter {
 }
 impl ConfigAdapter for JsonAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
-        self.data = serde_json::from_str::<serde_json::Map<String,serde_json::Value>>(&self.source).unwrap();
+        self.data =
+            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&self.source)
+                .unwrap();
 
         Ok(())
     }
@@ -136,17 +132,14 @@ impl ConfigAdapter for JsonAdapter {
         let mut kpath = String::default();
 
         for (k, v) in self.data.iter() {
-            
-                kpath = k.to_owned();
+            kpath = k.to_owned();
 
-                rec_json(&mut res, &kpath, v);
-            
+            rec_json(&mut res, &kpath, v);
         }
 
         res
     }
 }
-
 
 fn rec_json(config_map: &mut crate::map::Map, kpath: &str, v: &serde_json::Value) {
     debug!("{:?} => {:?}", kpath, v);
@@ -154,14 +147,11 @@ fn rec_json(config_map: &mut crate::map::Map, kpath: &str, v: &serde_json::Value
     match v {
         serde_json::Value::Object(m) => {
             for (kk, vv) in m {
-               
-                    let kk = format!("{}.{}", kpath, kk);
-                    rec_json(config_map, &kk, vv);
-                
+                let kk = format!("{}.{}", kpath, kk);
+                rec_json(config_map, &kk, vv);
             }
         }
 
-        
         serde_json::Value::String(s) => {
             config_map.add(kpath, s.clone());
         }
@@ -174,12 +164,9 @@ fn rec_json(config_map: &mut crate::map::Map, kpath: &str, v: &serde_json::Value
     }
 }
 
-
-
-
 pub struct TomlAdapter {
     source: String,
-    data: toml::map::Map::<String,toml::Value>,
+    data: toml::map::Map<String, toml::Value>,
     config_map: crate::map::Map,
 }
 
@@ -206,7 +193,7 @@ impl TomlAdapter {
 }
 impl ConfigAdapter for TomlAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
-        self.data = toml::from_str::<toml::map::Map<String,toml::Value>>(&self.source).unwrap();
+        self.data = toml::from_str::<toml::map::Map<String, toml::Value>>(&self.source).unwrap();
 
         Ok(())
     }
@@ -214,20 +201,17 @@ impl ConfigAdapter for TomlAdapter {
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 
-        let mut kpath ;
+        let mut kpath;
 
         for (k, v) in self.data.iter() {
-            
-                kpath = k.to_owned();
+            kpath = k.to_owned();
 
-                rec_toml(&mut res, &kpath, v);
-            
+            rec_toml(&mut res, &kpath, v);
         }
 
         res
     }
 }
-
 
 fn rec_toml(config_map: &mut crate::map::Map, kpath: &str, v: &toml::Value) {
     debug!("{:?} => {:?}", kpath, v);
@@ -235,19 +219,16 @@ fn rec_toml(config_map: &mut crate::map::Map, kpath: &str, v: &toml::Value) {
     match v {
         toml::Value::Table(m) => {
             for (kk, vv) in m {
-               
-                    let kk = format!("{}.{}", kpath, kk);
-                    rec_toml(config_map, &kk, vv);
-                
+                let kk = format!("{}.{}", kpath, kk);
+                rec_toml(config_map, &kk, vv);
             }
         }
 
         toml::Value::Integer(i) => {
-            let i=*i as i32;
+            let i = *i as i32;
             config_map.add(kpath, i);
         }
 
-        
         toml::Value::String(s) => {
             config_map.add(kpath, s.clone());
         }
@@ -261,10 +242,49 @@ fn rec_toml(config_map: &mut crate::map::Map, kpath: &str, v: &toml::Value) {
 }
 
 
+pub struct EnvAdapter {
+    data: std::collections::HashMap<String, String>,
+}
+
+ 
+
+impl EnvAdapter {
+    pub fn new() -> Self {
+        EnvAdapter {
+            data: std::collections::HashMap::new(),
+        }
+    }
+
+    pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
+    
+        debug!("{:?}",dotenv::from_filename(name).unwrap());
+        Ok(())
+    }
+}
+impl ConfigAdapter for EnvAdapter {
+    fn parse(&mut self) -> AdapterResult<()> {
+        self.data = dotenv::vars().collect();
+        Ok(())
+    }
+
+    fn get_map(&self) -> crate::map::Map {
+        let mut res = crate::map::Map::new();
+
+        let mut kpath = String::default();
+
+        for (k, v) in self.data.iter() {
+            kpath = k.to_owned();
+
+            res.add(k, v.to_owned());
+        }
+
+        res
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
- 
     use super::*;
     use crate::map::*;
 
@@ -276,14 +296,12 @@ mod tests {
     fn adapter_load() {
         init();
 
-        let mut a=  JsonAdapter::new();
+        let mut a = JsonAdapter::new();
         a.load_str("{ \"json\": true }").unwrap();
         a.parse();
-        
-        let map=a.get_map();
-        let jtrue=map.get::<bool>("json").unwrap();
-        assert_eq!(jtrue,true);
 
-
+        let map = a.get_map();
+        let jtrue = map.get::<bool>("json").unwrap();
+        assert_eq!(jtrue, true);
     }
 }

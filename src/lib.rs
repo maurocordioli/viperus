@@ -86,7 +86,14 @@ impl<'v> Viperus<'v> {
                 let mut adt = adapter::TomlAdapter::new();
                 adt.load_file(name).unwrap();
                self.load_adapter(&mut adt)
-                        }
+            },
+
+            Format::ENV => {
+                let mut adt = adapter::EnvAdapter::new();
+                adt.load_file(name).unwrap();
+                self.load_adapter(&mut adt)
+            },
+                        
         _ => {
                 Result::Err(Box::new(ViperusError::Generic("Format not implemented".to_owned())))
             }
