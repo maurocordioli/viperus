@@ -48,6 +48,12 @@ fn test_main() {
                 .long("show-output")   
                 .help("enable showoutput"),
         )
+        .arg(
+            Arg::with_name("quiet")
+                .long("quiet")   
+                .help("enable quiet"),
+        )
+
         .subcommand(
             SubCommand::with_name("test")
                 .about("controls testing features")

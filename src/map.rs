@@ -60,17 +60,7 @@ impl Map {
         }
     }
 
-    pub fn get_i32(&self, key: &str) -> Option<i32> {
-        let res = self.data.get(key);
-
-        match res {
-            None => None,
-            Some(mv) => match mv {
-                MapValue::I32(arg) => Some(*arg),
-                _ => None,
-            },
-        }
-    }
+     
 
 
     pub fn merge(&mut self, src: &Map)  {
@@ -97,33 +87,40 @@ mod tests {
         let mv1 = m.get_value("test.value").unwrap();
         if let MapValue::I32(v1) = mv1 {
             assert_eq!(10, *v1);
-        } else {
-            panic!("not a integer");
-        }
+        }  
     }
 
     #[test]
     fn test_map_get_32() {
-        let mut m = Map::new();
+        let mut m = Map::default();
         m.add_value("test.value2", MapValue::from("none"));
 
         let mv0 = m.add_value("test.value", MapValue::from(42));
         assert_eq!(None, mv0);
-        let mv1 = m.get_i32("test.value").unwrap();
-        assert_eq!(42, mv1);
-
+      
         let _a1 = m.add::<i32>("test.value_i32", 314).unwrap_or_default();
+        let _a2 = m.add::<i32>("test.value_i32", 314).unwrap_or_default();
+        
         let v1 = m.get::<i32>("test.value").unwrap();
         assert_eq!(42, v1);
 
         let v1_i32 = m.get::<i32>("test.value_i32").unwrap();
         assert_eq!(314, v1_i32);
 
+         
         let v1_str = m.get::<&str>("test.value2").unwrap();
         assert_eq!("none", v1_str);
 
-        assert!(m.get_i32("test.value2").is_none())
         
         
+    }
+    #[test]
+    #[should_panic]
+    fn invalid_map_get_32() {
+        let mut m = Map::default();
+        m.add_value("test.value2", MapValue::from("none"));
+
+        assert!(m.get::<i32>("test.value2").is_none())
+     
     }
 }

@@ -173,7 +173,7 @@ mod tests {
     #[test]
     fn it_works() {
         init();
-        let mut v = Viperus::new();
+        let mut v = Viperus::default();
         v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
         v.load_file(&path!(".","assets","test.json"), Format::JSON).unwrap();
         v.load_file(&path!(".","assets","test.toml"), Format::TOML).unwrap();

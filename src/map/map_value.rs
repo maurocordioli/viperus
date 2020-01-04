@@ -44,7 +44,7 @@ impl Into<i32> for &MapValue {
         if let MapValue::I32(i) = self {
             *i
         } else {
-            panic!("nnot an i32")
+            panic!("not an i32")
         }
     }
 }
@@ -107,6 +107,35 @@ impl Into<String> for MapValue {
             panic!("not a string")
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn init() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_cast_mv2bool() {
+        init();
+
+        let mv=MapValue::Empty;
+        let b:bool= mv.into();
+        assert!(b);
+    }
+
+    #[test]
+    fn valid_cast_mv2bool() {
+        init();
+
+        let mv=MapValue::BOOL(true);
+        let b:bool= mv.into();
+        assert!(b);
+    }
+
 }
 
 
