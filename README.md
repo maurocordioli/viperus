@@ -1,4 +1,4 @@
-# viperus
+# viperus  [![Build Status](https://travis-ci.com/maurocordioli/viperus.svg?branch=master)](https://travis-ci.com/maurocordioli/viperus)
  ̶g̶o̶  rust configuration with fangs!
  
 a incomplete rust package inspired by <https://github.com/spf13/viper>
