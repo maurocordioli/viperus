@@ -16,7 +16,9 @@ matrix:
 
 before_cache: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    cargo install cargo-tarpaulin -f
+    #uncomment for classic install 
+    #cargo install cargo-tarpaulin -f
+    bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
   fi
 
 script:
