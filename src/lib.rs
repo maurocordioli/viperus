@@ -10,6 +10,8 @@ mod map;
 use std::fmt::Display; 
 use std::error::{Error};
 use clap;
+pub use map::ViperusValue;
+pub use adapter::ConfigAdapter;
 
 #[derive(Debug)]
 pub enum ViperusError { Generic(String) }
@@ -31,6 +33,7 @@ macro_rules! path {
      
 }
 
+///preconfigured file formats with stock adapters
 #[derive(Debug, Clone, Copy)]
 pub enum Format {
     Auto,
@@ -40,6 +43,9 @@ pub enum Format {
     ENV,
 }
 
+/// A unified config Facade
+/// 
+/// Viperous manage config source from files, env and command line parameters in a unified manner
 #[derive(Debug)]
 pub struct Viperus<'a> {
     config_map: map::Map,
@@ -61,6 +67,7 @@ impl<'v> Viperus<'v> {
     }
 
 
+    ///load_clap  brings in  the clap mathes
     pub fn load_clap(&mut self,matches:clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
         
@@ -69,6 +76,8 @@ impl<'v> Viperus<'v> {
         Ok(())
     }
 
+    ///load_file load a config file using one of the precinnfigured addapters
+    ///then applay the adatpter using load_adapter method
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(),Box<dyn Error>> {
         debug!("loading  {}", name);
      
@@ -103,17 +112,22 @@ impl<'v> Viperus<'v> {
     
     }
 
+    /// load_adapter ask the adapter to parse her data and merges result map in the internal configartion map
     pub fn load_adapter(&mut self, adt: &mut dyn adapter::ConfigAdapter) -> Result<(),Box<dyn  Error>> {
         adt.parse().unwrap();
         self.config_map.merge(&adt.get_map());
         Ok(())
     }
 
+    /// get a configuration value of type T in this order
+    /// * overrided key
+    /// * clap parameters
+    /// * config adapter sourced values
     pub fn get<'a, T>(&'a self, key: &'a str) -> Option<T>
     where
-        map::MapValue: From<T>,
-        &'a map::MapValue: Into<T>,
-        map::MapValue: Into<T>,
+        map::ViperusValue: From<T>,
+        &'a map::ViperusValue: Into<T>,
+        map::ViperusValue: Into<T>,
        
     {
 
@@ -131,7 +145,7 @@ impl<'v> Viperus<'v> {
 
          if let Some(v) = res {
             
-            let mv=&map::MapValue::Str(v.to_owned());
+            let mv=&map::ViperusValue::Str(v.to_owned());
 
            return Some(  mv.clone().into() );
    
@@ -143,10 +157,13 @@ impl<'v> Viperus<'v> {
 
     }
 
+    /// add an override value to the cofiguration
+    /// 
+    /// key is structured in components separated by a "."
     pub fn add<'a, T>(&'a mut self, key: &'a str, value: T) -> Option<T>
     where
-        map::MapValue: From<T>,
-        map::MapValue: Into<T>,
+        map::ViperusValue: From<T>,
+        map::ViperusValue: Into<T>,
     {
         self.override_map.add(key, value)
     }
@@ -163,7 +180,7 @@ self.clap_bonds.insert(dst.to_owned(), src.to_owned())
 
 #[cfg(test)]
 mod tests {
-    use crate::map::MapValue;
+    use crate::map::ViperusValue;
     use super::*;
 
     fn init() {
@@ -174,8 +191,8 @@ mod tests {
     fn it_works() {
         init();
         let mut v = Viperus::default();
-        v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
         v.load_file(&path!(".","assets","test.json"), Format::JSON).unwrap();
+        v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
         v.load_file(&path!(".","assets","test.toml"), Format::TOML).unwrap();
        
         //v.load_file("asset\test.env", Format::JSON).unwrap();
@@ -184,5 +201,14 @@ mod tests {
 
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s); 
+
+        let json_b = v.get::<bool>("level1.key_json").unwrap();
+        assert_eq!(true, json_b);
+
+        let jyaml_b = v.get::<bool>("level1.key_yaml").unwrap();
+        assert_eq!(true, jyaml_b);
+
+
+        
     }
 }

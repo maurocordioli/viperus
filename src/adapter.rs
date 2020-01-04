@@ -1,283 +1,23 @@
-use serde_yaml;
-use toml;
+
 
 pub type AdapterResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+mod ayaml;
+mod ajson;
+mod atoml;
+mod aenv;
+
+pub use ayaml::*;
+pub use ajson::*;
+pub use atoml::*;
+pub use aenv::*;
+
+/// ConfigAdapter mediates from varius config format and Viperus
 pub trait ConfigAdapter {
+    /// parse create he interna rappresentation of the config file/mode
     fn parse(&mut self) -> AdapterResult<()>;
+    /// get_map returns a key value map rappresentation of the actaul config
     fn get_map(&self) -> crate::map::Map;
-}
-
-pub struct YamlAdapter {
-    source: String,
-    data: serde_yaml::Mapping,
-    //config_map: crate::map::Map,
-}
-
-impl YamlAdapter {
-    pub fn new() -> Self {
-        YamlAdapter {
-            source: String::default(),
-            data: serde_yaml::Mapping::new(),
-            //config_map: crate::map::Map::new(),
-        }
-    }
-
-    pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        self.source = std::fs::read_to_string(name)?;
-
-        Ok(())
-    }
-
-    pub fn load_str(&mut self, source: &str) -> AdapterResult<()> {
-        self.source = source.to_owned();
-
-        Ok(())
-    }
-}
-impl ConfigAdapter for YamlAdapter {
-    fn parse(&mut self) -> AdapterResult<()> {
-        self.data = serde_yaml::from_str::<serde_yaml::Mapping>(&self.source)?;
-
-        Ok(())
-    }
-
-    fn get_map(&self) -> crate::map::Map {
-        let mut res = crate::map::Map::new();
-
-        let mut kpath ;
-
-        for (k, v) in self.data.iter() {
-            if let serde_yaml::Value::String(s) = k {
-                kpath = s.to_owned();
-
-                rec_yaml(&mut res, &kpath, &v);
-            }
-        }
-
-        res
-    }
-}
-
-fn rec_yaml(config_map: &mut crate::map::Map, kpath: &str, v: &serde_yaml::Value) {
-    debug!("{:?} => {:?}", kpath, v);
-
-    match v {
-        serde_yaml::Value::Mapping(m) => {
-            for (kk, vv) in m {
-                if let serde_yaml::Value::String(s) = kk {
-                    let kk = format!("{}.{}", kpath, s);
-                    rec_yaml(config_map, &kk, vv);
-                }
-            }
-        }
-
-        serde_yaml::Value::Sequence(m) => {
-            for vv in m {
-                let kk = kpath.to_string();
-                rec_yaml(config_map, &kk, vv);
-            }
-        }
-        serde_yaml::Value::String(s) => {
-            config_map.add(kpath, s.clone());
-        }
-
-        serde_yaml::Value::Bool(b) => {
-            config_map.add(kpath, *b);
-        }
-
-        _ => (),
-    }
-}
-
-pub struct JsonAdapter {
-    source: String,
-    data: serde_json::Map<String, serde_json::Value>,
-    //config_map: crate::map::Map,
-}
-
-impl JsonAdapter {
-    pub fn new() -> Self {
-        JsonAdapter {
-            source: String::default(),
-            data: serde_json::Map::new(),
-            //config_map: crate::map::Map::new(),
-        }
-    }
-
-    pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        self.source = std::fs::read_to_string(name)?;
-
-        Ok(())
-    }
-
-    pub fn load_str(&mut self, source: &str) -> AdapterResult<()> {
-        self.source = source.to_owned();
-
-        Ok(())
-    }
-}
-impl ConfigAdapter for JsonAdapter {
-    fn parse(&mut self) -> AdapterResult<()> {
-        self.data =
-            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&self.source)
-                .unwrap();
-
-        Ok(())
-    }
-
-    fn get_map(&self) -> crate::map::Map {
-        let mut res = crate::map::Map::new();
-
-        let mut kpath;
-
-        for (k, v) in self.data.iter() {
-            kpath = k.to_owned();
-
-            rec_json(&mut res, &kpath, v);
-        }
-
-        res
-    }
-}
-
-fn rec_json(config_map: &mut crate::map::Map, kpath: &str, v: &serde_json::Value) {
-    debug!("{:?} => {:?}", kpath, v);
-
-    match v {
-        serde_json::Value::Object(m) => {
-            for (kk, vv) in m {
-                let kk = format!("{}.{}", kpath, kk);
-                rec_json(config_map, &kk, vv);
-            }
-        }
-
-        serde_json::Value::String(s) => {
-            config_map.add(kpath, s.clone());
-        }
-
-        serde_json::Value::Bool(b) => {
-            config_map.add(kpath, *b);
-        }
-
-        _ => (),
-    }
-}
-
-pub struct TomlAdapter {
-    source: String,
-    data: toml::map::Map<String, toml::Value>,
-    //config_map: crate::map::Map,
-}
-
-impl TomlAdapter {
-    pub fn new() -> Self {
-        TomlAdapter {
-            source: String::default(),
-            data: toml::map::Map::new(),
-            //config_map: crate::map::Map::new(),
-        }
-    }
-
-    pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        self.source = std::fs::read_to_string(name)?;
-
-        Ok(())
-    }
-
-    pub fn load_str(&mut self, source: &str) -> AdapterResult<()> {
-        self.source = source.to_owned();
-
-        Ok(())
-    }
-}
-impl ConfigAdapter for TomlAdapter {
-    fn parse(&mut self) -> AdapterResult<()> {
-        self.data = toml::from_str::<toml::map::Map<String, toml::Value>>(&self.source).unwrap();
-
-        Ok(())
-    }
-
-    fn get_map(&self) -> crate::map::Map {
-        let mut res = crate::map::Map::new();
-
-        let mut kpath;
-
-        for (k, v) in self.data.iter() {
-            kpath = k.to_owned();
-
-            rec_toml(&mut res, &kpath, v);
-        }
-
-        res
-    }
-}
-
-fn rec_toml(config_map: &mut crate::map::Map, kpath: &str, v: &toml::Value) {
-    debug!("{:?} => {:?}", kpath, v);
-
-    match v {
-        toml::Value::Table(m) => {
-            for (kk, vv) in m {
-                let kk = format!("{}.{}", kpath, kk);
-                rec_toml(config_map, &kk, vv);
-            }
-        }
-
-        toml::Value::Integer(i) => {
-            let i = *i as i32;
-            config_map.add(kpath, i);
-        }
-
-        toml::Value::String(s) => {
-            config_map.add(kpath, s.clone());
-        }
-
-        toml::Value::Boolean(b) => {
-            config_map.add(kpath, *b);
-        }
-
-        _ => (),
-    }
-}
-
-
-pub struct EnvAdapter {
-    data: std::collections::HashMap<String, String>,
-}
-
- 
-
-impl EnvAdapter {
-    pub fn new() -> Self {
-        EnvAdapter {
-            data: std::collections::HashMap::new(),
-        }
-    }
-
-    pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-    
-        debug!("{:?}",dotenv::from_filename(name).unwrap());
-        Ok(())
-    }
-}
-impl ConfigAdapter for EnvAdapter {
-    fn parse(&mut self) -> AdapterResult<()> {
-        self.data = dotenv::vars().collect();
-        Ok(())
-    }
-
-    fn get_map(&self) -> crate::map::Map {
-        let mut res = crate::map::Map::new();
-
-     
-        for (k, v) in self.data.iter() {
-            
-            res.add(k, v.to_owned());
-        }
-
-        res
-    }
 }
 
 
@@ -291,7 +31,7 @@ mod tests {
     }
 
     #[test]
-    fn adapter_load() {
+    fn adapter_json_load() {
         init();
 
         let mut a = JsonAdapter::new();
@@ -301,5 +41,41 @@ mod tests {
         let map = a.get_map();
         let jtrue = map.get::<bool>("json").unwrap();
         assert_eq!(jtrue, true);
+    }
+
+
+    #[test]
+    fn adapter_yaml_load() {
+        init();
+
+        let mut a = YamlAdapter::new();
+        a.load_str("yaml: true\n").unwrap();
+        a.parse().unwrap();
+
+        let map = a.get_map();
+        let jtrue = map.get::<bool>("yaml").unwrap();
+        assert_eq!(jtrue, true);
+    }
+
+    #[test]
+    fn adapter_toml_load() {
+        init();
+
+        let mut a = TomlAdapter::new();
+        a.load_str("[level1]\nkey1=true\nkeyi32=42\nkey=\"hello world!\"\n").unwrap();
+        a.parse().unwrap();
+
+        let map = a.get_map();
+        let jtrue = map.get::<bool>("level1.key1").unwrap();
+        assert_eq!(jtrue, true);
+
+        let ji32 = map.get::<i32>("level1.keyi32").unwrap();
+        assert_eq!(ji32, 42);
+
+
+        let jstr = map.get::<String>("level1.key").unwrap();
+        assert_eq!(jstr, "hello world!");
+        
+        
     }
 }

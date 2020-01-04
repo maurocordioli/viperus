@@ -4,7 +4,7 @@
         "alfa": "a"
     },
     "level1": {
-        "key3": false,
+        "key_json": true,
         "key4": true
     }
 }

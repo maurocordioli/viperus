@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate log;
+extern crate log; 
 extern crate clap;
 extern crate viperus;
 
@@ -69,14 +69,12 @@ fn test_main() {
 
     let mut v = viperus::Viperus::new();
     v.load_file(".env", viperus::Format::ENV).unwrap();
-
     v.load_clap(matches).expect("strange...");
     v.bond_clap("v", "verbose");
-
     v.add("verbose", true);
+
     let f_verbose = v.get::<bool>("verbose").unwrap();
-
     debug!("verbose {:?}", f_verbose);
-
+    info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
     assert_eq!(true, f_verbose);
 }
