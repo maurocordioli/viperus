@@ -7,3 +7,12 @@ jobs:
   allow_failures:
     - rust: nightly
   fast_finish: true
+addons:
+  apt:
+    packages:
+      - kcov
+
+after_success: |
+  kcov --exclude-pattern=/.cargo,/usr/lib --verify target/cov target/debug/viperus-* &&
+  bash <(curl -s https://codecov.io/bash) &&
+  echo "Uploaded code coverage"
