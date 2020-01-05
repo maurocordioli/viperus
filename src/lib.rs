@@ -225,7 +225,7 @@ impl<'v> Viperus<'v> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::map::ViperusValue;
+    
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
