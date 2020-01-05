@@ -61,3 +61,7 @@ let mut v = Viperus::new();
         assert_eq!(true, fVerbose);
   
 ```
+## Todo
+* type inference  for .env files from defaults 
+* stabilize api
+* set global defaults value or type

@@ -27,12 +27,12 @@ impl Into<bool> for &ViperusValue {
 
 impl Into<bool> for ViperusValue {
     fn into(self) -> bool {
-        if let ViperusValue::BOOL(i) = self {
-            i
-        } else {
-            panic!("not a bool")
-        }
+        match self {
+        ViperusValue::BOOL(i) => i,
+        _ =>  panic!("not a bool {:?}",self),
+        
     }
+}
 }
 
 impl From<bool> for ViperusValue {

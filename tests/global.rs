@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate log; 
 extern crate viperus;
 
@@ -14,9 +13,9 @@ fn test_global()
 
 
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
-    let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
+    let ok=viperus::get::<String>("TEST_BOOL").unwrap();
 
-    assert_eq!(true,ok);
+    assert_eq!("true",ok);
 
 }
 
