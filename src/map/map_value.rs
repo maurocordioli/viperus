@@ -49,20 +49,18 @@ impl From<i32> for ViperusValue {
 
 impl Into<i32> for &ViperusValue {
     fn into(self) -> i32 {
-        if let ViperusValue::I32(i) = self {
-            *i
-        } else {
-            panic!("not an i32")
+        match self {
+            ViperusValue::I32(i) => *i,
+            _ => panic!("not an i32"),
         }
     }
 }
 
 impl Into<i32> for ViperusValue {
     fn into(self) -> i32 {
-        if let ViperusValue::I32(i) = self {
-            i
-        } else {
-            panic!("nnot an i32")
+        match self {
+            ViperusValue::I32(i) => i,
+            _ => panic!("not an i32"),
         }
     }
 }
@@ -87,10 +85,9 @@ impl From<&str> for ViperusValue {
 
 impl<'a> Into<&'a str> for &'a ViperusValue {
     fn into(self) -> &'a str {
-        if let ViperusValue::Str(i) = self {
-            i
-        } else {
-            panic!("not an str")
+        match self { 
+        ViperusValue::Str(i) => i,
+        _ => panic!("not an str")
         }
     }
 }
@@ -129,8 +126,8 @@ mod tests {
         init();
 
         let mv = ViperusValue::Empty;
-        let b: bool = mv.into();
-      }
+        let _b: bool = mv.into();
+    }
 
     #[test]
     #[should_panic]
@@ -138,7 +135,7 @@ mod tests {
         init();
 
         let mv = &ViperusValue::Empty;
-        let b: bool = mv.into();
+        let _b: bool = mv.into();
     }
 
     #[test]
@@ -163,21 +160,16 @@ mod tests {
         init();
 
         let mv = ViperusValue::from("hello world!");
-        if let ViperusValue::Str(s) = mv {
-            assert_eq!(s, "hello world!");
-        } else {
-            panic!("something very wrong");
+        match mv {
+        ViperusValue::Str(s) =>  assert_eq!(s, "hello world!"),
+        _ => panic!("something very wrong"),
         }
 
         let refmv = ViperusValue::from(&("hello world!".to_owned()));
-        if let ViperusValue::Str(s) = refmv {
-            assert_eq!(s, "hello world!");
-        } else {
-            panic!("something very wrong");
+        match refmv {
+        ViperusValue::Str(s) => assert_eq!(s, "hello world!"),
+        _ => panic!("something very wrong")
         }
-
-
-  
     }
 
     #[test]
@@ -188,5 +180,4 @@ mod tests {
         let mv = &ViperusValue::Empty;
         let _b: String = mv.into();
     }
-  
 }

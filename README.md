@@ -10,6 +10,15 @@ no Go projects are built using Viperus.
 merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
 with defaults, and type cheking
 
+you can create a stand alone Viperus object or "enjoy" a global instance ( thread safe protected with a mutex)
+via shadow functions load_file|get|add|load_clap that are routed to the static istance
+
+```rust
+     viperus::load_file(".env", viperus::Format::ENV).unwrap();
+     let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
+```
+by the way , Yes I konw globals are evil. but as I was inspired by the evill go pakcge viper....
+
 ## logging/debug
 the crate uses "log" facade so you can set the env variable to RUST=viperus=[DEBUG LEVEL] with
 [DEBUG LEVEL] = INFO|WARN|DEBUG 

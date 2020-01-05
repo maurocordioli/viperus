@@ -49,14 +49,16 @@ impl Map {
         self.data.get(key)
     }
 
-    pub fn get<'a, T>(&'a self, key: &'a str) -> Option<T>
+    pub fn get<'a,'b,'c, T>(&'a self, key: &'a str) -> Option<T>
     where
         ViperusValue: From<T>,
-        &'a ViperusValue: Into<T>,
+        &'c ViperusValue: Into<T>,
+        ViperusValue: Into<T>,
+         
     {
         match self.data.get(key) {
             None => None,
-            Some(mv) => Some(mv.into()),
+            Some(mv) => Some((*mv).clone().into()),
         }
     }
 
@@ -108,7 +110,7 @@ mod tests {
         assert_eq!(314, v1_i32);
 
          
-        let v1_str = m.get::<&str>("test.value2").unwrap();
+        let v1_str = m.get::<String>("test.value2").unwrap();
         assert_eq!("none", v1_str);
 
         

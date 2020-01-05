@@ -17,6 +17,7 @@ toml="~0.5.5"
 dirs="~2.0.0"
 clap="~2.33.0"
 dotenv="~0.15.0"
- 
+lazy_static="*"
+
 [dev-dependencies]
 env_logger = "*"
