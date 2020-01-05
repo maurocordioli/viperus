@@ -25,6 +25,17 @@ the crate uses "log" facade so you can set the env variable to RUST=viperus=[DEB
 
 
 ## Example
+you can find some integration tests in the test dir and also in the example forlder
+you can run example with cargo
+
+```
+cargo run --example cli-clap-yaml -- 
+cargo run --example cli-clap-yaml -- -u http://nowhere/api/v1
+```
+the first run print the value from the example.yaml file 
+the second from the cli arg
+
+
 ```rust
 
 

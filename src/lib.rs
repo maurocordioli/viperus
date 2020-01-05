@@ -57,6 +57,17 @@ where
     v.get(key)
 }
 
+
+ ///load_clap  brings in  the clap magic
+ pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error>> {
+     VIPERUS.lock().unwrap().load_clap(matches)
+ }
+
+ pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
+    VIPERUS.lock().unwrap().bond_clap(src,dst)
+}
+
+
 #[derive(Debug)]
 pub enum ViperusError {
     Generic(String),
@@ -113,7 +124,7 @@ impl<'v> Viperus<'v> {
         }
     }
 
-    ///load_clap  brings in  the clap mathes
+    ///load_clap  brings in  the clap magic
     pub fn load_clap(&mut self, matches: clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
 
@@ -220,6 +231,23 @@ mod tests {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
+    #[test]
+    fn lib_errors() {
+
+        let e = ViperusError::Generic(String::from("generic"));
+        let fe=format!("{}",e);
+        let ex : Box<dyn Error> = Box::new(e);
+        debug!("fe {}",fe);
+         
+        assert_ne!(ex.description(),"");
+
+
+       
+
+
+
+
+    }
     #[test]
     fn it_works() {
         init();
