@@ -25,9 +25,9 @@ fn main() {
         .takes_value(true),
     ).get_matches();
 
-    viperus::load_clap(matches);
+    viperus::load_clap(matches).unwrap();
     viperus::bond_clap("url", "service.url");    
-    viperus::load_file(&path!("examples","example.yaml"), viperus::Format::YAML);
+    viperus::load_file(&path!("examples","example.yaml"), viperus::Format::YAML).unwrap();
 
 
     println!("this is cli-clap-yaml talkin.");
