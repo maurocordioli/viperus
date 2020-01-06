@@ -55,7 +55,7 @@ dotenv="0.15.0"
 lazy_static="1.4.0"
 
 [dev-dependencies]
-env_logger = "*"
+env_logger = "0.7.1"
 
 
 [features]
