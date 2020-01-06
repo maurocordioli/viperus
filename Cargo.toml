@@ -5,10 +5,42 @@ authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/maurocordioli/viperus"
-desciption="Viperus Viper is an  (in)complete configuration solution for rust applications heavly inspred by the GO package Viper.It supports defaults reading from JSON, TOML, YAML, envfile, environment variables reading from Clap command line flags setting explicit values"
-exclude = [
-    "tarpaulin-report.html",
-]
+desciption="Viperus is an  (in)complete configuration solution for rust applications heavly inspred by the GO package Viper.It supports defaults reading from JSON, TOML, YAML, envfile, environment variables reading from Clap command line flags setting explicit values"
+exclude = ["tarpaulin-report.html"]
+keywords= ["config","yaml","toml","json","dotenv"]
+readme="README.md"
+
+[badges]
+
+
+# Travis CI: `repository` in format "<user>/<project>" is required.
+# `branch` is optional; default is `master`
+travis-ci = { repository = "maurocordioli/viperus", branch = "master" }
+
+# Coveralls: `repository` is required. `branch` is optional; default is `master`
+# `service` is optional; valid values are `github` (default) and `bitbucket`.
+coveralls = { repository = "maurocordioli/viperus", branch = "master", service = "github" }
+
+
+# Maintenance: `status` is required. Available options are:
+# - `actively-developed`: New features are being added and bugs are being fixed.
+# - `passively-maintained`: There are no plans for new features, but the maintainer intends to
+#   respond to issues that get filed.
+# - `as-is`: The crate is feature complete, the maintainer does not intend to continue working on
+#   it or providing support, but it works for the purposes it was designed for.
+# - `experimental`: The author wants to share it with the community but is not intending to meet
+#   anyone's particular use case.
+# - `looking-for-maintainer`: The current maintainer would like to transfer the crate to someone
+#   else.
+# - `deprecated`: The maintainer does not recommend using this crate (the description of the crate
+#   can describe why, there could be a better solution available or there could be problems with
+#   the crate that the author does not want to fix).
+# - `none`: Displays no badge on crates.io, since the maintainer has not chosen to specify
+#   their intentions, potential crate users will need to investigate on their own.
+maintenance = { status = "experimental" }
+
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
