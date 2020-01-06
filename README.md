@@ -1,27 +1,53 @@
 # viperus  [![Build Status](https://travis-ci.com/maurocordioli/viperus.svg?branch=master)](https://travis-ci.com/maurocordioli/viperus) [![Coverage Status](https://coveralls.io/repos/github/maurocordioli/viperus/badge.svg?branch=master)](https://coveralls.io/github/maurocordioli/viperus?branch=master)
  ̶g̶o̶  rust configuration with fangs!
  
-a incomplete rust package inspired by <https://github.com/spf13/viper>
+viperus is an (in)complete configuration solution for Rust applications. 
+inspired  heavly inspired by the wonderful go package <https://github.com/spf13/viper>
+I have already said that it is incomplete? 
+use at your own risk. ;-)
 
 ## 
-no Go projects are built using Viperus.
+no Go projects are built using Viperus :-)
 
-## Feature
-merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
-with defaults, and type cheking
+## What is Viperus?
+handle some types of configuration needs and formats. 
+It supports:
+
+* setting defaults
+* reading from JSON, TOML, YAML, envfile config files
+* reading from environment variables
+* reading from Clap command line flags
+* setting explicit values
+
+## Why Viperus?
+
+beacuse I was migrating some go apps... and a was missing Viper ease of use :-)
+
+Viperus uses the following decreasing precedence order.
+
+ * explicit call to `add`
+ * clap flag
+ * env
+ * config
+ * default
+
+Viperus merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
+with defaults, and type checking
 
 you can create a stand alone Viperus object or "enjoy" a global instance ( thread safe protected with a mutex)
-via shadow functions load_file|get|add|load_clap that are routed to the static istance
+via shadow functions load_file|get|add|load_clap that are routed to the static instance.  
+
 
 ```rust
      viperus::load_file(".env", viperus::Format::ENV).unwrap();
      let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
 ```
 by the way , Yes I konw globals are evil. but as I was inspired by the evill go pakcge viper....
+if you dislike globals you can opt-out disabling in your cargo.toml the feature "global".
 
 ## logging/debug
-the crate uses "log" facade so you can set the env variable to RUST=viperus=[DEBUG LEVEL] with
-[DEBUG LEVEL] = INFO|WARN|DEBUG 
+the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST=viperus=[DEBUG LEVEL] with
+[DEBUG LEVEL] = info|warning|debug 
 
 
 ## Example
@@ -75,4 +101,6 @@ let mut v = Viperus::new();
 ## Todo
 * type inference  for .env files from defaults 
 * stabilize api
-* set global defaults value or type
+* documentation
+* improove my rust karma
+

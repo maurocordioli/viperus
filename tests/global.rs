@@ -11,7 +11,7 @@ fn test_global()
 {
     init();
 
-
+    
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
     let ok=viperus::get::<String>("TEST_BOOL").unwrap();
     assert_eq!("true",ok);

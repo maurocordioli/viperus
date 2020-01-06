@@ -6,7 +6,9 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/maurocordioli/viperus"
 desciption="Viperus Viper is an  (in)complete configuration solution for rust applications heavly inspred by the GO package Viper.It supports defaults reading from JSON, TOML, YAML, envfile, environment variables reading from Clap command line flags setting explicit values"
-
+exclude = [
+    "tarpaulin-report.html",
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -22,3 +24,11 @@ lazy_static="1.4.0"
 
 [dev-dependencies]
 env_logger = "*"
+
+
+[features]
+# no features by default
+default = [ "global"]
+
+# static global config
+global = []

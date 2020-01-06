@@ -1,12 +1,12 @@
 #![warn(clippy::all)]
+#[macro_use]
+extern crate lazy_static;
 
 extern crate serde;
 extern crate serde_yaml;
 #[macro_use]
 extern crate log;
 extern crate dirs;
-#[macro_use]
-extern crate lazy_static;
 
 mod adapter;
 mod map;
@@ -16,9 +16,13 @@ pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
 use std::str::FromStr;
+
+#[cfg(feature="global")] 
+mod global {
+use super::*;
 use std::sync::Mutex;
 
-lazy_static! {
+    lazy_static! {
     static ref VIPERUS: Mutex::<Viperus<'static>> = { Mutex::new(Viperus::new()) };
 }
 
@@ -77,6 +81,10 @@ pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error
 pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
     VIPERUS.lock().unwrap().bond_clap(src, dst)
 }
+}
+
+pub use global::*;
+
 
 #[derive(Debug)]
 pub enum ViperusError {
