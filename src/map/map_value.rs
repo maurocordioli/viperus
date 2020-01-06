@@ -17,10 +17,9 @@ pub enum ViperusValue {
 
 impl Into<bool> for &ViperusValue {
     fn into(self) -> bool {
-        if let ViperusValue::BOOL(i) = self {
-            *i
-        } else {
-            panic!("not a bool")
+        match self {
+        ViperusValue::BOOL(i) => *i,
+        _=> panic!("not a bool")
         }
     }
 }
@@ -94,20 +93,19 @@ impl<'a> Into<&'a str> for &'a ViperusValue {
 
 impl<'a> Into<String> for &'a ViperusValue {
     fn into(self) -> String {
-        if let ViperusValue::Str(i) = self {
-            i.clone()
-        } else {
-            panic!("not an str")
+        match self {
+        ViperusValue::Str(i) => i.clone(),
+            _ => panic!("not an str")
         }
+    
     }
 }
 
 impl Into<String> for ViperusValue {
     fn into(self) -> String {
-        if let ViperusValue::Str(i) = self {
-            i
-        } else {
-            panic!("not a string")
+        match self  {
+        ViperusValue::Str(i) => i,
+        _=> panic!("not a string")
         }
     }
 }

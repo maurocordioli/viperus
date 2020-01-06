@@ -14,8 +14,16 @@ fn test_global()
 
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
     let ok=viperus::get::<String>("TEST_BOOL").unwrap();
-
     assert_eq!("true",ok);
 
+    viperus::add_default("default", true);
+    assert_eq!(viperus::get::<bool>("default").unwrap(),true);
+
+    viperus::add("default",false);
+
+    assert_ne!(viperus::get::<bool>("default").unwrap(),true);
+
+
+    
 }
 

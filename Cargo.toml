@@ -5,6 +5,7 @@ authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/maurocordioli/viperus"
+desciption="Viperus Viper is an  (in)complete configuration solution for rust applications heavly inspred by the GO package Viper.It supports defaults reading from JSON, TOML, YAML, envfile, environment variables reading from Clap command line flags setting explicit values"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

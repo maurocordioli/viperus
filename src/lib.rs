@@ -15,6 +15,7 @@ use clap;
 pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
+use std::str::FromStr;
 use std::sync::Mutex;
 
 lazy_static! {
@@ -30,43 +31,52 @@ pub fn load_adapter(adt: &mut dyn adapter::ConfigAdapter) -> Result<(), Box<dyn 
     VIPERUS.lock().unwrap().load_adapter(adt)
 }
 
-
 /// add an override value to the cofiguration
 ///
 /// key is structured in components separated by a "."
-pub fn add<T>( key: &str, value: T) -> Option<T>
-    where
-        map::ViperusValue: From<T>,
-        map::ViperusValue: Into<T>,
-    {
-        VIPERUS.lock().unwrap().add(key, value)
-    }
+pub fn add<T>(key: &str, value: T) -> Option<T>
+where
+    map::ViperusValue: From<T>,
+    map::ViperusValue: Into<T>,
+{
+    VIPERUS.lock().unwrap().add(key, value)
+}
 
-
-/// get a configuration value of type T in this order
+/// get a configuration value of type T from global configuration in this order
 /// * overrided key
 /// * clap parameters
 /// * config adapter sourced values
+/// * default value
 pub fn get<'a, 'b, T>(key: &'a str) -> Option<T>
 where
     map::ViperusValue: From<T>,
     &'b map::ViperusValue: Into<T>,
     map::ViperusValue: Into<T>,
+    T: FromStr,
 {
     let v = VIPERUS.lock().unwrap();
     v.get(key)
 }
 
-
- ///load_clap  brings in  the clap magic
- pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error>> {
-     VIPERUS.lock().unwrap().load_clap(matches)
- }
-
- pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
-    VIPERUS.lock().unwrap().bond_clap(src,dst)
+/// add an default value to the global cofiguration
+///
+/// key is structured in components separated by a "."
+pub fn add_default<T>(key: &str, value: T) -> Option<T>
+where
+    map::ViperusValue: From<T>,
+    map::ViperusValue: Into<T>,
+{
+    VIPERUS.lock().unwrap().add_default(key, value)
 }
 
+///load_clap  brings in  the clap magic
+pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error>> {
+    VIPERUS.lock().unwrap().load_clap(matches)
+}
+
+pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
+    VIPERUS.lock().unwrap().bond_clap(src, dst)
+}
 
 #[derive(Debug)]
 pub enum ViperusError {
@@ -102,6 +112,7 @@ pub enum Format {
 /// Viperous manage config source from files, env and command line parameters in a unified manner
 #[derive(Debug)]
 pub struct Viperus<'a> {
+    default_map: map::Map,
     config_map: map::Map,
     override_map: map::Map,
     clap_matches: clap::ArgMatches<'a>,
@@ -117,6 +128,7 @@ impl<'v> Default for Viperus<'v> {
 impl<'v> Viperus<'v> {
     pub fn new() -> Self {
         Viperus {
+            default_map: map::Map::new(),
             config_map: map::Map::new(),
             override_map: map::Map::new(),
             clap_matches: clap::ArgMatches::default(),
@@ -185,6 +197,7 @@ impl<'v> Viperus<'v> {
         map::ViperusValue: From<T>,
         &'c map::ViperusValue: Into<T>,
         map::ViperusValue: Into<T>,
+        T: FromStr,
     {
         let res = self.override_map.get(key);
 
@@ -194,16 +207,37 @@ impl<'v> Viperus<'v> {
 
         let src = self.clap_bonds.get::<String>(&key.to_owned());
         if let Some(dst) = src {
-            let res = self.clap_matches.value_of(dst);
+            if self.clap_matches.is_present(dst) {
+                let res = self.clap_matches.value_of(dst);
 
-            if let Some(v) = res {
-                let mv = &map::ViperusValue::Str(v.to_owned());
-
-                return Some(mv.clone().into());
+                if let Some(v) = res {
+                    let mv = &map::ViperusValue::Str(v.to_owned());
+                    return Some(mv.clone().into());
+                }
             }
         }
 
-        self.config_map.get(key)
+        let cfg = self.config_map.get(key);
+
+        if cfg.is_some() {
+            return cfg;
+        }
+
+        
+        //default option value
+        if let Some(dst) = src {
+            if !self.clap_matches.is_present(dst) {
+                let res = self.clap_matches.value_of(dst);
+
+                if let Some(v) = res {
+                    return v.parse::<T>().ok();
+                }
+            }
+        }
+
+       self.default_map.get(key)
+
+
     }
 
     /// add an override value to the cofiguration
@@ -220,12 +254,22 @@ impl<'v> Viperus<'v> {
     pub fn bond_clap(&mut self, src: &str, dst: &str) -> Option<String> {
         self.clap_bonds.insert(dst.to_owned(), src.to_owned())
     }
+
+    /// add an default value to the cofiguration
+    ///
+    /// key is structured in components separated by a "."
+    pub fn add_default<'a, T>(&'a mut self, key: &'a str, value: T) -> Option<T>
+    where
+        map::ViperusValue: From<T>,
+        map::ViperusValue: Into<T>,
+    {
+        self.default_map.add(key, value)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -233,20 +277,12 @@ mod tests {
 
     #[test]
     fn lib_errors() {
-
         let e = ViperusError::Generic(String::from("generic"));
-        let fe=format!("{}",e);
-        let ex : Box<dyn Error> = Box::new(e);
-        debug!("fe {}",fe);
-         
-        assert_ne!(ex.description(),"");
+        let fe = format!("{}", e);
+        let ex: Box<dyn Error> = Box::new(e);
+        debug!("fe {}", fe);
 
-
-       
-
-
-
-
+        assert_ne!(ex.description(), "");
     }
     #[test]
     fn it_works() {
@@ -270,5 +306,11 @@ mod tests {
 
         let jyaml_b = v.get::<bool>("level1.key_yaml").unwrap();
         assert_eq!(true, jyaml_b);
+
+        v.add_default("default", true);
+
+
+
+        assert_eq!(v.get::<bool>("default").unwrap(),true);
     }
 }
