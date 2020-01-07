@@ -44,6 +44,8 @@ mod global;
 #[cfg(feature = "global")]
 pub use global::*;
 
+use std::collections::*;
+
 #[derive(Debug)]
 pub enum ViperusError {
     Generic(String),
@@ -83,6 +85,7 @@ pub struct Viperus<'a> {
     override_map: map::Map,
     clap_matches: clap::ArgMatches<'a>,
     clap_bonds: std::collections::HashMap<String, String>,
+    loaded_files: std::collections::LinkedList::<(String,Format)>,
 }
 
 impl<'v> Default for Viperus<'v> {
@@ -99,6 +102,8 @@ impl<'v> Viperus<'v> {
             override_map: map::Map::new(),
             clap_matches: clap::ArgMatches::default(),
             clap_bonds: std::collections::HashMap::new(),
+            loaded_files: std::collections::LinkedList::new(),
+
         }
     }
 
@@ -110,10 +115,26 @@ impl<'v> Viperus<'v> {
         Ok(())
     }
 
-    ///load_file load a config file using one of the precinnfigured addapters
+   
+
+    ///reload   all config file preserving the order
+    pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
+        self.config_map.drain();
+        let lf= &self.loaded_files.iter().cloned().collect::<Vec<_>>();
+        for (name,format) in lf {
+            debug!("reloading  {} => {:?}", name,format);
+            self.load_file(name, format.clone())?;
+        }
+        Ok(())
+    }
+       
+
+    ///load_file load a config file using one of the preconfigured addapters
     ///then applay the adatpter using load_adapter method
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(), Box<dyn Error>> {
         debug!("loading  {}", name);
+        self.loaded_files.push_back((name.to_owned(),format));
+
 
         match format {
             Format::YAML => {
@@ -256,7 +277,7 @@ mod tests {
         assert_ne!(ex.to_string(), "");
     }
     #[test]
-    fn it_works() {
+    fn lib_works() {
         init();
         let mut v = Viperus::default();
         v.load_file(&path!(".", "assets", "test.json"), Format::JSON)
@@ -281,5 +302,13 @@ mod tests {
         v.add_default("default", true);
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
+
+
+        v.reload().unwrap();
+
+        assert_eq!(v.get::<bool>("default").unwrap(), true);
+
+        
+
     }
 }

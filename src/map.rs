@@ -1,4 +1,6 @@
+use std::collections::hash_map::Drain;
 use std::collections::HashMap;
+
 
 mod map_value;
 pub use map_value::ViperusValue;
@@ -16,6 +18,13 @@ impl Map {
         Map {
             data: HashMap::new(),
         }
+    }
+
+
+    pub fn drain<'a>(&'a mut self) -> Drain<'a,String,ViperusValue>
+     
+    {
+      self.data.drain()
     }
 
     pub fn add<T>(&mut self, key: &str, value: T) -> Option<T>
