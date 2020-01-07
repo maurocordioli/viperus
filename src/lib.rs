@@ -44,7 +44,7 @@ mod global;
 #[cfg(feature = "global")]
 pub use global::*;
 
-use std::collections::*;
+ 
 
 #[derive(Debug)]
 pub enum ViperusError {
