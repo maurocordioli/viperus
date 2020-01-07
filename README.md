@@ -42,7 +42,7 @@ via shadow functions load_file|get|add|load_clap that are routed to the static i
      viperus::load_file(".env", viperus::Format::ENV).unwrap();
      let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
 ```
-by the way , Yes I konw globals are evil. but as I was inspired by the evill go pakcge viper....
+by the way , Yes I konw globals are evil. but as I was inspired by the  go package viper....
 if you dislike globals you can opt-out disabling in your cargo.toml the feature "global".
 
 ## logging/debug
@@ -70,32 +70,32 @@ the second from the cli arg
                                .short("v")
                                .multiple(true)
                                .help("Sets the level of verbosity"))
-                          .get_matches();
-
-
-    
-   
+                          .get_matches();   
 
 let mut v = Viperus::new();
-   
-        v.load_clap(matches);
-        v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
-        v.load_file(&path!(".","assets","test.json"), Format::JSON).unwrap();
-        v.load_file(&path!(".","assets","test.toml"), Format::TOML).unwrap();
-   
-        v.bond_clap("v","verbose");
+
+//enable clap
+v.load_clap(matches);
+//enable a yaml json toml file
+v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
+v.load_file(&path!(".","assets","test.json"), Format::JSON).unwrap();
+v.load_file(&path!(".","assets","test.toml"), Format::TOML).unwrap();
+
+//link the "v" clap option to the key "verbose"
+v.bond_clap("v","verbose");
 
 
-        //v.load_file("asset\test.env", Format::JSON).unwrap();
-        v.add("service.url", String::from("http://example.com"));
-        debug!("final {:?}", v);
+//add an explicit overload 
+v.add("service.url", String::from("http://example.com"));
+debug!("final {:?}", v);
 
-        let s: &str = v.get("service.url").unwrap();
-        assert_eq!("http://example.com", s);
-   
-        let fVerbose=v.get::<bool>("verbose").unwrap();
+//get a typed key
+let s: &str = v.get("service.url").unwrap();
+assert_eq!("http://example.com", s);
 
-        assert_eq!(true, fVerbose);
+//get a bool from configs or app args
+let fVerbose=v.get::<bool>("verbose").unwrap();
+assert_eq!(true, fVerbose);
   
 ```
 ## Todo
