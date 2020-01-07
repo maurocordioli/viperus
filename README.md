@@ -99,6 +99,7 @@ assert_eq!(true, fVerbose);
   
 ```
 ## Todo
+* error propagation
 * type inference  for .env files from defaults 
 * stabilize api
 * documentation

@@ -253,7 +253,7 @@ mod tests {
         let ex: Box<dyn Error> = Box::new(e);
         debug!("fe {}", fe);
 
-        assert_ne!(ex.description(), "");
+        assert_ne!(ex.to_string(), "");
     }
     #[test]
     fn it_works() {
