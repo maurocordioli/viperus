@@ -20,7 +20,7 @@ use std::str::FromStr;
 #[cfg(feature="global")] 
 mod global;
  
-
+#[cfg(feature="global")] 
 pub use global::*;
 
 
