@@ -1,3 +1,23 @@
+//! viperus is an (in)complete configuration solution for Rust applications.
+//!
+//! //! I have already said that it is incomplete?
+//! use at your own risk. ;-)
+//! viperus handle some types of configuration needs and formats.
+//!
+//! It supports:
+//! * setting defaults
+//! * reading from JSON, TOML, YAML, envfile config files
+//! * reading from environment variables
+//! * reading from Clap command line flags
+//! * setting explicit values
+//!
+//! Viperus uses the following decreasing precedence order.
+//! * explicit call to `add`
+//! * clap flag
+//! * env
+//! * config
+//! * default
+//!
 #![warn(clippy::all)]
 #[macro_use]
 extern crate lazy_static;
@@ -11,18 +31,18 @@ extern crate dirs;
 mod adapter;
 mod map;
 pub use adapter::ConfigAdapter;
+
 use clap;
 pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
 use std::str::FromStr;
 
-#[cfg(feature="global")] 
+#[cfg(feature = "global")]
 mod global;
- 
-#[cfg(feature="global")] 
-pub use global::*;
 
+#[cfg(feature = "global")]
+pub use global::*;
 
 #[derive(Debug)]
 pub enum ViperusError {
@@ -169,7 +189,6 @@ impl<'v> Viperus<'v> {
             return cfg;
         }
 
-        
         //default option value
         if let Some(dst) = src {
             if !self.clap_matches.is_present(dst) {
@@ -181,9 +200,7 @@ impl<'v> Viperus<'v> {
             }
         }
 
-       self.default_map.get(key)
-
-
+        self.default_map.get(key)
     }
 
     /// add an override value to the cofiguration
@@ -222,6 +239,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn lib_invalid_format() {
+        init();
+        let mut v = Viperus::default();
+        v.load_file(&path!(".", "assets", "test.json"), Format::Auto)
+            .unwrap();
+    }
+    #[test]
     fn lib_errors() {
         let e = ViperusError::Generic(String::from("generic"));
         let fe = format!("{}", e);
@@ -255,8 +280,6 @@ mod tests {
 
         v.add_default("default", true);
 
-
-
-        assert_eq!(v.get::<bool>("default").unwrap(),true);
+        assert_eq!(v.get::<bool>("default").unwrap(), true);
     }
 }

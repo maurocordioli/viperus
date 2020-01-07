@@ -99,3 +99,21 @@ fn rec_yaml(config_map: &mut crate::map::Map, kpath: &str, v: &serde_yaml::Value
         _ => (),
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+   #[test]
+   fn ayaml_basic(){
+
+    let mut adp = YamlAdapter::new();
+    adp.load_str("test: true\n").unwrap();
+    adp.parse().unwrap();
+    let map=adp.get_map();
+    let test_value=map.get::<bool>("test").unwrap();
+    assert_eq!(test_value,true);
+
+   }
+}
