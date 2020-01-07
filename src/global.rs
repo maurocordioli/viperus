@@ -68,5 +68,9 @@ pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
     VIPERUS.lock().unwrap().bond_clap(src, dst)
 }
 
+/// reload the configuration files
+pub fn reload() -> Result<(),Box<dyn Error>> {
+    VIPERUS.lock().unwrap().reload()
+}
 
  
