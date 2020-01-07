@@ -103,5 +103,5 @@ assert_eq!(true, fVerbose);
 * type inference  for .env files from defaults 
 * stabilize api
 * documentation
-* improove my rust karma
+* improve my rust karma
 
