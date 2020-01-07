@@ -1,6 +1,6 @@
 //! viperus is an (in)complete configuration solution for Rust applications.
 //!
-//! //! I have already said that it is incomplete?
+//! I have already said that it is incomplete?
 //! use at your own risk. ;-)
 //! viperus handle some types of configuration needs and formats.
 //!
