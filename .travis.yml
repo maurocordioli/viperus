@@ -19,7 +19,7 @@ before_cache: |
     #uncomment for classic install 
     cargo install cargo-tarpaulin 
     #bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-  fi 
+  fi   
 
 script:
 - cargo clean
