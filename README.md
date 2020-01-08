@@ -18,6 +18,7 @@ It supports:
 * reading from environment variables
 * reading from Clap command line flags
 * setting explicit values
+* reload of all files
 
 ## Why Viperus?
 
@@ -99,9 +100,16 @@ assert_eq!(true, fVerbose);
   
 ```
 ## Todo
+* remote configs
 * error propagation
 * type inference  for .env files from defaults 
 * stabilize api
 * documentation
 * improve my rust karma
+
+## Changes
+* 0.1.3 better clap args : default values
+* 0.1.2 relaod config from files
+* 0.1.1 fixes dcs
+* 0.1.0 first release
 
