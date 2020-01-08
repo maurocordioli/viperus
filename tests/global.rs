@@ -102,6 +102,14 @@ fn test_main() {
     debug!("verbose {:?}", f_verbose);
     info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
     assert_eq!(true, f_verbose);
+
+
+    viperus::reload().unwrap();
+    let f_verbose = viperus::get::<bool>("verbose").unwrap();
+    assert_eq!(true, f_verbose);
+   
+
+  
 }
 
 
