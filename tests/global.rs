@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate log; 
+extern crate log;
 extern crate clap;
 extern crate viperus;
 
@@ -9,30 +9,34 @@ fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
 
- 
-
 #[test]
-fn test_global()
-{
+fn test_global() {
     init();
 
-     
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
-    let ok=viperus::get::<String>("TEST_BOOL").unwrap();
-    assert_eq!("true",ok);
+    let ok = viperus::get::<String>("TEST_BOOL").unwrap();
+    assert_eq!("true", ok);
 
     viperus::add_default("default", true);
-    assert_eq!(viperus::get::<bool>("default").unwrap(),true);
+    assert_eq!(viperus::get::<bool>("default").unwrap(), true);
 
-    viperus::add("default",false);
+    viperus::add("default", false);
 
-    assert_ne!(viperus::get::<bool>("default").unwrap(),true);
-
-
-    
+    assert_ne!(viperus::get::<bool>("default").unwrap(), true);
 }
 
+/// a mokup adapter for testonly
+struct ZeroAdapter {}
+impl viperus::ConfigAdapter for ZeroAdapter {
+    fn parse(&mut self) -> viperus::AdapterResult<()> {
+        Ok(())
+    }
 
+    fn get_map(&self) -> viperus::Map {
+        let  res = viperus::Map::new();
+        res
+    }
+}
 
 #[test]
 fn test_main() {
@@ -65,20 +69,15 @@ fn test_main() {
         )
         .arg(
             Arg::with_name("nocapture")
-                .long("nocapture")   
+                .long("nocapture")
                 .help("enable no capture"),
         )
         .arg(
             Arg::with_name("showoutput")
-                .long("show-output")   
+                .long("show-output")
                 .help("enable showoutput"),
         )
-        .arg(
-            Arg::with_name("quiet")
-                .long("quiet")   
-                .help("enable quiet"),
-        )
-
+        .arg(Arg::with_name("quiet").long("quiet").help("enable quiet"))
         .subcommand(
             SubCommand::with_name("test")
                 .about("controls testing features")
@@ -92,7 +91,6 @@ fn test_main() {
         )
         .get_matches();
 
-    
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
     viperus::load_clap(matches).expect("strange...");
     viperus::bond_clap("v", "verbose");
@@ -100,21 +98,24 @@ fn test_main() {
 
     let f_verbose = viperus::get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
-    info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
+    info!("RUST_LOG={}", dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
     assert_eq!(true, f_verbose);
-
 
     viperus::reload().unwrap();
     let f_verbose = viperus::get::<bool>("verbose").unwrap();
     assert_eq!(true, f_verbose);
-   
-
-  
 }
 
+#[test]
+fn test_adapter() {
+    init();
+    info!("test adapter creation");
 
+    viperus::load_file(".env", viperus::Format::ENV).unwrap();
+    let mut adp = ZeroAdapter {};
+    viperus::load_adapter(&mut adp).unwrap();
+    viperus::add("verbose", true);
 
-
-
-
-
+    let f_verbose = viperus::get::<bool>("verbose").unwrap();
+    assert_eq!(true, f_verbose);
+}

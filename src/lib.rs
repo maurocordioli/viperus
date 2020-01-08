@@ -31,9 +31,11 @@ extern crate dirs;
 mod adapter;
 mod map;
 pub use adapter::ConfigAdapter;
+pub use adapter::AdapterResult;
 
 use clap;
 pub use map::ViperusValue;
+pub use map::Map;
 use std::error::Error;
 use std::fmt::Display;
 use std::str::FromStr;
@@ -112,6 +114,11 @@ impl<'v> Viperus<'v> {
         debug!("loading  {:?}", matches);
 
         self.clap_matches = matches;
+
+        for &k in self.clap_matches.args.keys() {
+            self.clap_bonds.insert(k.to_owned(), k.to_owned());
+        }
+
         Ok(())
     }
 
@@ -194,7 +201,10 @@ impl<'v> Viperus<'v> {
 
         let src = self.clap_bonds.get::<String>(&key.to_owned());
         if let Some(dst) = src {
+            debug!("clap mapped {}=>{}",key,dst);
+
             if self.clap_matches.is_present(dst) {
+                debug!("clap matched {}=>{}",key,dst);
                 let res = self.clap_matches.value_of(dst);
 
                 if let Some(v) = res {
@@ -212,9 +222,11 @@ impl<'v> Viperus<'v> {
 
         //default option value
         if let Some(dst) = src {
+            debug!("clap default mapped {}=>{}",key,dst);
             if !self.clap_matches.is_present(dst) {
+                debug!("clap default matched {}=>{}",key,dst);
                 let res = self.clap_matches.value_of(dst);
-
+                debug!("clap default value {}=>{} {:?}",key,dst,res);
                 if let Some(v) = res {
                     return v.parse::<T>().ok();
                 }

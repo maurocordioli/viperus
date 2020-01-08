@@ -53,6 +53,14 @@ fn test_main() {
                 .long("quiet")   
                 .help("enable quiet"),
         )
+        .arg(
+            Arg::with_name("argdefault")
+                .short("a")
+                .long("argdefault")               
+                .help("an argument with default")
+                .takes_value(true)
+                .default_value("none"),
+        )
 
         .subcommand(
             SubCommand::with_name("test")
@@ -67,14 +75,21 @@ fn test_main() {
         )
         .get_matches();
 
+    
     let mut v = viperus::Viperus::new();
     v.load_file(".env", viperus::Format::ENV).unwrap();
     v.load_clap(matches).expect("strange...");
     v.bond_clap("v", "verbose");
+    v.bond_clap("argdefault", "argdefault");
     v.add("verbose", true);
 
     let f_verbose = v.get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
     info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
     assert_eq!(true, f_verbose);
+
+
+    let f_argdefault = v.get::<String>("argdefault").unwrap();
+    assert_eq!("none", f_argdefault);
+   
 }
