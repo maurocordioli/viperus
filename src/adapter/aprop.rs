@@ -47,4 +47,4 @@ impl ConfigAdapter for JavaPropertiesAdapter {
 
         res
     }
-}
+} 
