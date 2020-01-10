@@ -19,6 +19,7 @@ impl Into<bool> for &ViperusValue {
     fn into(self) -> bool {
         match self {
         ViperusValue::BOOL(i) => *i,
+        ViperusValue::Str(s) => s.parse().expect("not a bool"),
         _=> panic!("not a bool")
         }
     }
@@ -28,6 +29,8 @@ impl Into<bool> for ViperusValue {
     fn into(self) -> bool {
         match self {
         ViperusValue::BOOL(i) => i,
+        ViperusValue::Str(s) => s.parse().expect("not a bool"),
+
         _ =>  panic!("not a bool {:?}",self),
         
     }
@@ -50,6 +53,7 @@ impl Into<i32> for &ViperusValue {
     fn into(self) -> i32 {
         match self {
             ViperusValue::I32(i) => *i,
+            ViperusValue::Str(s) => s.parse().expect("not an i32"),
             _ => panic!("not an i32"),
         }
     }
@@ -59,6 +63,8 @@ impl Into<i32> for ViperusValue {
     fn into(self) -> i32 {
         match self {
             ViperusValue::I32(i) => i,
+           
+            ViperusValue::Str(s) => s.parse().expect("not an i32"),
             _ => panic!("not an i32"),
         }
     }
