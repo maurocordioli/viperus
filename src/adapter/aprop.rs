@@ -1,10 +1,10 @@
 use super::*;
 
-use java_properties::read;
+
 use java_properties::PropertiesIter;
-use std::collections::HashMap;
+
 use std::fs::File;
-use std::io::prelude::*;
+
 use std::io::BufReader;
 
 /// JPropertiesAdapter map a ajava properties file in a linear multilevel key/value array
