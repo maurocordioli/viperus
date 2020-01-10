@@ -75,6 +75,7 @@ pub enum Format {
     JSON,
     TOML,
     ENV,
+    JAVAPROPERTIES,
 }
 
 /// A unified config Facade
@@ -162,6 +163,12 @@ impl<'v> Viperus<'v> {
 
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
+                adt.load_file(name).unwrap();
+                self.load_adapter(&mut adt)
+            }
+
+            Format::JAVAPROPERTIES => {
+                let mut adt = adapter::JavaPropertiesAdapter::new();
                 adt.load_file(name).unwrap();
                 self.load_adapter(&mut adt)
             }
@@ -297,6 +304,9 @@ mod tests {
         v.load_file(&path!(".", "assets", "test.yaml"), Format::YAML)
             .unwrap();
         v.load_file(&path!(".", "assets", "test.toml"), Format::TOML)
+            .unwrap();
+
+        v.load_file(&path!(".", "assets", "test.properties"), Format::JAVAPROPERTIES)
             .unwrap();
         //v.load_file("asset\test.env", Format::JSON).unwrap();
         v.add("service.url", String::from("http://example.com"));

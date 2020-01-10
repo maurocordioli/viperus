@@ -14,7 +14,7 @@ handle some types of configuration needs and formats.
 It supports:
 
 * setting defaults
-* reading from JSON, TOML, YAML, envfile config files
+* reading from JSON, TOML, YAML, envfile ,java properties config files
 * reading from environment variables
 * reading from Clap command line flags
 * setting explicit values
@@ -81,7 +81,7 @@ v.load_clap(matches);
 v.load_file(&path!(".","assets","test.yaml"), Format::YAML).unwrap();
 v.load_file(&path!(".","assets","test.json"), Format::JSON).unwrap();
 v.load_file(&path!(".","assets","test.toml"), Format::TOML).unwrap();
-
+v.load_file(&path!(".","assets","test.properties"), Format::JAVAPROPERTIES).unwrap();
 //link the "v" clap option to the key "verbose"
 v.bond_clap("v","verbose");
 
@@ -102,12 +102,13 @@ assert_eq!(true, fVerbose);
 ## Todo
 * remote configs
 * error propagation
-* type inference  for .env files from defaults 
+* type inference  for .env and java propertie files from defaults 
 * stabilize api
 * documentation
 * improve my rust karma
 
 ## Changes
+* 0.1.4 add format : java properties files
 * 0.1.3 better clap args : default values
 * 0.1.2 relaod config from files
 * 0.1.1 fixes dcs
