@@ -1,6 +1,6 @@
 [package]
 name = "viperus"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -54,10 +54,11 @@ clap="2.33.0"
 dotenv="0.15.0"
 lazy_static="1.4.0"
 java-properties = "1.2.0"
+notify = "4.0.0"
 
 [dev-dependencies]
 env_logger = "0.7.1"
-
+tempfile = "3.1.0"
 
 [features]
 # no features by default

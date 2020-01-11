@@ -30,14 +30,15 @@ extern crate dirs;
 
 mod adapter;
 mod map;
-pub use adapter::ConfigAdapter;
 pub use adapter::AdapterResult;
+pub use adapter::ConfigAdapter;
 
 use clap;
-pub use map::ViperusValue;
 pub use map::Map;
+pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
+use std::path::PathBuf;
 use std::str::FromStr;
 
 #[cfg(feature = "global")]
@@ -45,8 +46,6 @@ mod global;
 
 #[cfg(feature = "global")]
 pub use global::*;
-
- 
 
 #[derive(Debug)]
 pub enum ViperusError {
@@ -88,7 +87,7 @@ pub struct Viperus<'a> {
     override_map: map::Map,
     clap_matches: clap::ArgMatches<'a>,
     clap_bonds: std::collections::HashMap<String, String>,
-    loaded_files: std::collections::LinkedList::<(String,Format)>,
+    loaded_files: std::collections::LinkedList<(String, Format)>,
 }
 
 impl<'v> Default for Viperus<'v> {
@@ -106,7 +105,6 @@ impl<'v> Viperus<'v> {
             clap_matches: clap::ArgMatches::default(),
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
-
         }
     }
 
@@ -123,47 +121,61 @@ impl<'v> Viperus<'v> {
         Ok(())
     }
 
-   
-
     ///reload   all config file preserving the order
     pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
         self.config_map.drain();
-        let lf= &self.loaded_files.iter().cloned().collect::<Vec<_>>();
-        for (name,format) in lf {
-            debug!("reloading  {} => {:?}", name,format);
-            self.load_file(name, format.clone())?;
+        let lf = &self.loaded_files.iter().cloned().collect::<Vec<_>>();
+        for (name, format) in lf {
+            let fe = std::path::Path::new(name).exists();
+            if (fe) {
+                debug!("reloading  {} => {:?}", name, format);
+
+                self.load_file(name, format.clone())?;
+            } else {
+                debug!("not exists  {} => {:?}", name, format);
+            }
         }
         Ok(())
     }
-       
+
+    pub fn loaded_file_names(&self) -> Vec<String> {
+        self.loaded_files.iter().map(|e| e.0.clone()).collect()
+    }
 
     ///load_file load a config file using one of the preconfigured addapters
     ///then applay the adatpter using load_adapter method
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(), Box<dyn Error>> {
         debug!("loading  {}", name);
-        self.loaded_files.push_back((name.to_owned(),format));
-
 
         match format {
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
                 adt.load_file(name).unwrap();
+                self.loaded_files.push_back((name.to_owned(), format));
+
                 self.load_adapter(&mut adt)
             }
             Format::JSON => {
                 let mut adt = adapter::JsonAdapter::new();
                 adt.load_file(name).unwrap();
+                self.loaded_files.push_back((name.to_owned(), format));
+
                 self.load_adapter(&mut adt)
             }
             Format::TOML => {
                 let mut adt = adapter::TomlAdapter::new();
                 adt.load_file(name).unwrap();
+                self.loaded_files.push_back((name.to_owned(), format));
+
                 self.load_adapter(&mut adt)
             }
 
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
                 adt.load_file(name).unwrap();
+
+                self.loaded_files
+                    .push_back((adt.get_real_path().to_str().unwrap().to_owned(), format));
                 self.load_adapter(&mut adt)
             }
 
@@ -208,10 +220,10 @@ impl<'v> Viperus<'v> {
 
         let src = self.clap_bonds.get::<String>(&key.to_owned());
         if let Some(dst) = src {
-            debug!("clap mapped {}=>{}",key,dst);
+            debug!("clap mapped {}=>{}", key, dst);
 
             if self.clap_matches.is_present(dst) {
-                debug!("clap matched {}=>{}",key,dst);
+                debug!("clap matched {}=>{}", key, dst);
                 let res = self.clap_matches.value_of(dst);
 
                 if let Some(v) = res {
@@ -229,11 +241,11 @@ impl<'v> Viperus<'v> {
 
         //default option value
         if let Some(dst) = src {
-            debug!("clap default mapped {}=>{}",key,dst);
+            debug!("clap default mapped {}=>{}", key, dst);
             if !self.clap_matches.is_present(dst) {
-                debug!("clap default matched {}=>{}",key,dst);
+                debug!("clap default matched {}=>{}", key, dst);
                 let res = self.clap_matches.value_of(dst);
-                debug!("clap default value {}=>{} {:?}",key,dst,res);
+                debug!("clap default value {}=>{} {:?}", key, dst, res);
                 if let Some(v) = res {
                     return v.parse::<T>().ok();
                 }
@@ -306,8 +318,11 @@ mod tests {
         v.load_file(&path!(".", "assets", "test.toml"), Format::TOML)
             .unwrap();
 
-        v.load_file(&path!(".", "assets", "test.properties"), Format::JAVAPROPERTIES)
-            .unwrap();
+        v.load_file(
+            &path!(".", "assets", "test.properties"),
+            Format::JAVAPROPERTIES,
+        )
+        .unwrap();
         //v.load_file("asset\test.env", Format::JSON).unwrap();
         v.add("service.url", String::from("http://example.com"));
         debug!("final {:?}", v);
@@ -324,18 +339,12 @@ mod tests {
         let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
         assert_eq!(true, jprop_b);
 
-     
-
         v.add_default("default", true);
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
 
-
         v.reload().unwrap();
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
-
-        
-
     }
 }

@@ -3,11 +3,18 @@
  
 viperus is an (in)complete configuration solution for Rust applications. 
 inspired  heavly inspired by the wonderful go package <https://github.com/spf13/viper>
-I have already said that it is incomplete? 
 use at your own risk. ;-)
-
 ## 
-no Go projects are built using Viperus :-)
+no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
+
+## Recent Changes
+* 0.1.5 add watch_all files with autoreload
+* 0.1.4 add format : java properties files
+* 0.1.3 better clap args : default values
+* 0.1.2 relaod config from files
+* 0.1.1 fixes dcs
+* 0.1.0 first release
+
 
 ## What is Viperus?
 handle some types of configuration needs and formats. 
@@ -19,6 +26,7 @@ It supports:
 * reading from Clap command line flags
 * setting explicit values
 * reload of all files
+* whatch config files and reolad all in something changes
 
 ## Why Viperus?
 
@@ -38,17 +46,24 @@ with defaults, and type checking
 you can create a stand alone Viperus object or "enjoy" a global instance ( thread safe protected with a mutex)
 via shadow functions load_file|get|add|load_clap that are routed to the static instance.  
 
-
 ```rust
+     //add a config file & enviroment variables
      viperus::load_file(".env", viperus::Format::ENV).unwrap();
+     //add another file
+     viperus::load_file("user.env", viperus::Format::ENV).unwrap();
+     
+     //watch the config and autoreload if something changes
+     viperus::watch_all();
+
      let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
 ```
 by the way , Yes I konw globals are evil. but as I was inspired by the  go package viper....
 if you dislike globals you can opt-out disabling in your cargo.toml the feature "global".
 
 ## logging/debug
-the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST=viperus=[DEBUG LEVEL] with
-[DEBUG LEVEL] = info|warning|debug 
+the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST_LOG=viperus=[DEBUG LEVEL] with
+[DEBUG LEVEL] = info|warning|debug  or RUST_LOG=[DEBUG LEVEL]
+
 
 
 ## Example
@@ -102,15 +117,9 @@ assert_eq!(true, fVerbose);
 ## Todo
 * remote configs
 * error propagation
-* type inference  for .env and java propertie files from defaults 
+* type inference  for .env and java properties files from defaults 
 * stabilize api
 * documentation
 * improve my rust karma
 
-## Changes
-* 0.1.4 add format : java properties files
-* 0.1.3 better clap args : default values
-* 0.1.2 relaod config from files
-* 0.1.1 fixes dcs
-* 0.1.0 first release
 

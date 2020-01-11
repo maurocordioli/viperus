@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::path::PathBuf;
 use super::*;
 
 /// EnvAdapter map a DotEnv file in a linear multilevel key/value array
@@ -6,6 +8,7 @@ use super::*;
 /// internally uses dotenv crate
 pub struct EnvAdapter {
     data: std::collections::HashMap<String, String>,
+    real_path:PathBuf,
 }
 
  
@@ -14,13 +17,19 @@ impl EnvAdapter {
     pub fn new() -> Self {
         EnvAdapter {
             data: std::collections::HashMap::new(),
+            real_path: PathBuf::default(),
         }
     }
 
     pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
     
-        debug!("{:?}",dotenv::from_filename(name).unwrap());
+        self.real_path=dotenv::from_filename(name).unwrap();
+        debug!("{:?}",self.real_path);
         Ok(())
+    }
+
+    pub fn get_real_path(&self) -> &Path {
+        &self.real_path
     }
 }
 impl ConfigAdapter for EnvAdapter {
@@ -29,6 +38,7 @@ impl ConfigAdapter for EnvAdapter {
         Ok(())
     }
 
+   
     fn get_map(&self) -> crate::map::Map {
         let mut res = crate::map::Map::new();
 

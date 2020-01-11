@@ -1,13 +1,60 @@
 //! all the stuff that create a global instance of viperus
-//! 
+//!
 //! the instance is "lazy_static" and proteced by a mutex
 
 use super::*;
+use std::sync::mpsc::channel;
+
+use notify::Watcher;
+use std::time::Duration;
+
+use std::sync::Arc;
 use std::sync::Mutex;
 
 lazy_static! {
     /// the global instance
-    static ref VIPERUS: Mutex::<Viperus<'static>> = { Mutex::new(Viperus::new()) };
+    static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = { Arc::new(Mutex::new(Viperus::new())) };
+}
+
+/// Watch the config files and autoreload in case of change
+/// 
+/// the function starts a separate thread
+/// TODO ad an unwatch_all() function;
+pub fn watch_all() -> Result<(), Box<dyn Error>> {
+    let lf = VIPERUS.lock().unwrap().loaded_file_names();
+
+    let vip = VIPERUS.clone();
+
+    
+
+    std::thread::spawn(move || {
+        // Create a channel to receive the events.
+        let (tx, rx) = channel();
+
+        // Automatically select the best implementation for your platform.
+        let mut watcher: notify::RecommendedWatcher =
+            notify::Watcher::new(tx, Duration::from_secs(2)).unwrap();
+
+        // Add a path to be watched. All files and directories at that path and
+
+        for f in lf {
+            watcher.watch(f, notify::RecursiveMode::NonRecursive).unwrap();
+        }
+
+        // This is a simple loop, but you may want to use more complex logic here,
+        // for example to handle I/O.
+        loop {
+            match rx.recv() {
+                Ok(event) => {
+                    info!("watch {:?}", event);
+                    vip.lock().unwrap().reload().unwrap();
+                }
+                Err(e) => error!("watch error: {:?}", e),
+            }
+        }
+    });
+
+    Ok(())
 }
 
 /// load_file load a config file in the global instance
@@ -69,8 +116,6 @@ pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
 }
 
 /// reload the configuration files
-pub fn reload() -> Result<(),Box<dyn Error>> {
+pub fn reload() -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().reload()
 }
-
- 
