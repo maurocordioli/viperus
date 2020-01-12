@@ -8,7 +8,7 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
-* 0.1.7 add cache feature, modular "featurization"
+* 0.1.8 add cache feature, modular "featurization"
 * 0.1.5 add watch_all files with autoreload
 * 0.1.4 add format : java properties files
 * 0.1.3 better clap args : default values
@@ -87,7 +87,7 @@ single featues could be activated in a selective way  via cargo.toml
 
 ```
 [dependencies.viperus]
-version = "0.1.7"
+version = "0.1.8"
 default-features = false # do not include the default features, and optionally
 # cherry-pick individual features
 features = ["global", "cache","watch","fmt-yaml"]

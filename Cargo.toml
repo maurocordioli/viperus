@@ -1,6 +1,6 @@
 [package]
 name = "viperus"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -69,7 +69,7 @@ harness = false
 
 [features]
 # no features by default
-default = [ "global","cache","watch","fmt-yaml","fmt-json","fmt-env","fmt-toml","fmt-javaproperties","fmt-clap"]
+default = [ "global","cache","watch","notify","fmt-yaml","fmt-json","fmt-env","fmt-toml","fmt-javaproperties","fmt-clap"]
 
 # static global config
 global = []

@@ -4,7 +4,7 @@ extern crate log;
 extern crate clap;
 extern crate viperus;
 
-#[cfg(feature = "fmt-clap")]
+#[cfg(feature = "fmt-clapcargo")]
 use clap::{App, Arg, SubCommand};
 fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
