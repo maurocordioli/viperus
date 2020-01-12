@@ -85,11 +85,23 @@ fn test_main() {
 
     let f_verbose = v.get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
+    
+    
+
     info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
     assert_eq!(true, f_verbose);
+
+    v.cache(true);
+    let f_verbose = v.get::<bool>("verbose").unwrap();
+    assert_eq!(true, f_verbose);
+    let f_verbose = v.get::<bool>("verbose").unwrap();
+    assert_eq!(true, f_verbose);    
+    v.cache(false);
 
 
     let f_argdefault = v.get::<String>("argdefault").unwrap();
     assert_eq!("none", f_argdefault);
+
+
    
 }

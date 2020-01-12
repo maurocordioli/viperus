@@ -89,6 +89,7 @@ where
     &'b map::ViperusValue: Into<T>,
     map::ViperusValue: Into<T>,
     T: FromStr,
+    T: Clone,
 {
     let v = VIPERUS.lock().unwrap();
     v.get(key)
@@ -119,3 +120,11 @@ pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
 pub fn reload() -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().reload()
 }
+
+/// cache the query results for small configs speedup is x4 
+pub fn cache(enable:bool)  {
+    VIPERUS.lock().unwrap().cache(enable)
+}
+
+
+

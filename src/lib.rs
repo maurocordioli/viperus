@@ -32,6 +32,7 @@ mod adapter;
 mod map;
 pub use adapter::AdapterResult;
 pub use adapter::ConfigAdapter;
+use std::cell::RefCell;
 
 use clap;
 pub use map::Map;
@@ -88,6 +89,8 @@ pub struct Viperus<'a> {
     clap_matches: clap::ArgMatches<'a>,
     clap_bonds: std::collections::HashMap<String, String>,
     loaded_files: std::collections::LinkedList<(String, Format)>,
+    cache_map: RefCell<map::Map>,
+    cache_use: bool,
 }
 
 impl<'v> Default for Viperus<'v> {
@@ -105,6 +108,8 @@ impl<'v> Viperus<'v> {
             clap_matches: clap::ArgMatches::default(),
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
+            cache_map: RefCell::new(map::Map::new()),
+            cache_use: false,
         }
     }
 
@@ -124,10 +129,13 @@ impl<'v> Viperus<'v> {
     ///reload   all config file preserving the order
     pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
         self.config_map.drain();
+        if self.cache_use {
+            self.cache(true);
+        }
+
         let lf = &self.loaded_files.iter().cloned().collect::<Vec<_>>();
         for (name, format) in lf {
-            let fe = std::path::Path::new(name).exists();
-            if (fe) {
+            if std::path::Path::new(name).exists() {
                 debug!("reloading  {} => {:?}", name, format);
 
                 self.load_file(name, format.clone())?;
@@ -211,10 +219,22 @@ impl<'v> Viperus<'v> {
         &'c map::ViperusValue: Into<T>,
         map::ViperusValue: Into<T>,
         T: FromStr,
+        T: Clone,
     {
+        if self.cache_use {
+            let res = self.cache_map.borrow().get(key);
+
+            if let Some(v) = res {
+                return Some(v);
+            }
+        }
+
         let res = self.override_map.get(key);
 
         if let Some(v) = res {
+            if self.cache_use {
+                self.cache_map.borrow_mut().add(key, v.clone());
+            }
             return Some(v);
         }
 
@@ -228,6 +248,10 @@ impl<'v> Viperus<'v> {
 
                 if let Some(v) = res {
                     let mv = &map::ViperusValue::Str(v.to_owned());
+                    if self.cache_use {
+                        self.cache_map.borrow_mut().add(key, mv.clone().into());
+                    }
+
                     return Some(mv.clone().into());
                 }
             }
@@ -236,6 +260,10 @@ impl<'v> Viperus<'v> {
         let cfg = self.config_map.get(key);
 
         if cfg.is_some() {
+            if self.cache_use {
+                self.cache_map.borrow_mut().add(key, cfg.clone().unwrap());
+            }
+
             return cfg;
         }
 
@@ -247,12 +275,24 @@ impl<'v> Viperus<'v> {
                 let res = self.clap_matches.value_of(dst);
                 debug!("clap default value {}=>{} {:?}", key, dst, res);
                 if let Some(v) = res {
-                    return v.parse::<T>().ok();
+                    let pval = v.parse::<T>().ok();
+                    //UHMMMM TODO
+                    if self.cache_use {
+                        self.cache_map.borrow_mut().add(key, pval.clone().unwrap());
+                    }
+
+                    return pval;
                 }
             }
         }
 
-        self.default_map.get(key)
+        let def = self.default_map.get(key);
+
+        if self.cache_use && def.is_some() {
+            self.cache_map.borrow_mut().add(key, def.clone().unwrap());
+        }
+
+        def
     }
 
     /// add an override value to the cofiguration
@@ -270,7 +310,7 @@ impl<'v> Viperus<'v> {
         self.clap_bonds.insert(dst.to_owned(), src.to_owned())
     }
 
-    /// add an default value to the cofiguration
+    /// add an default value to the configuration
     ///
     /// key is structured in components separated by a "."
     pub fn add_default<'a, T>(&'a mut self, key: &'a str, value: T) -> Option<T>
@@ -279,6 +319,16 @@ impl<'v> Viperus<'v> {
         map::ViperusValue: Into<T>,
     {
         self.default_map.add(key, value)
+    }
+
+    /// cache the query results for small configs speedup is x4
+    pub fn cache(&mut self, enable: bool) {
+        self.cache_use = enable;
+
+        if self.cache_use {
+            let cache_old = &mut map::Map::new();
+            std::mem::swap(cache_old, &mut self.cache_map.borrow_mut());
+        }
     }
 }
 
@@ -329,7 +379,14 @@ mod tests {
 
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
+        v.cache(true);
+        let s: String = v.get("service.url").unwrap();
+        assert_eq!("http://example.com", s);
+        let s: String = v.get("service.url").unwrap();
+        assert_eq!("http://example.com", s);
+        v.cache(false);
 
+        //test config
         let json_b = v.get::<bool>("level1.key_json").unwrap();
         assert_eq!(true, json_b);
 
@@ -339,12 +396,33 @@ mod tests {
         let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
         assert_eq!(true, jprop_b);
 
+        //test config with cache
+        v.cache(true);
+        let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+        assert_eq!(true, jprop_b);
+        let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+        assert_eq!(true, jprop_b);
+        v.cache(false);
+
+        //test default
         v.add_default("default", true);
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
 
+        //test default with cache
+        v.cache(true);
+        assert_eq!(v.get::<bool>("default").unwrap(), true);
+        assert_eq!(v.get::<bool>("default").unwrap(), true);
+        v.cache(false);
+
+        //reload
         v.reload().unwrap();
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
+        //reload with cache
+        v.cache(true);
+        v.reload().unwrap();
+        assert_eq!(v.get::<bool>("default").unwrap(), true);
+        v.cache(false);
     }
 }

@@ -4,7 +4,7 @@ extern crate clap;
 extern crate viperus;
 extern crate tempfile;
 use std::io::Write;
-use clap::{App, Arg, SubCommand};
+
 use std::fs::File;
 
 

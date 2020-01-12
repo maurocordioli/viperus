@@ -52,6 +52,18 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             };
         })
     });
+    v.cache(true);
+    c.bench_function("inst cached get config bool key", |b| {
+        b.iter(|| {
+            let res = v.get::<bool>("level1.key_bool").unwrap();
+            if res {
+                cnt = cnt + 1;
+            };
+        })
+    });
+    v.cache(false);
+    
+
     c.bench_function("inst get override bool key", |b| {
         b.iter(|| {
             let res = v.get::<bool>("level1.key_add").unwrap();
@@ -61,6 +73,17 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
+    v.cache(true);
+    c.bench_function("inst cached get override bool key", |b| {
+        b.iter(|| {
+            let res = v.get::<bool>("level1.key_add").unwrap();
+            if res {
+                cnt = cnt + 1;
+            }
+        })
+    });
+    v.cache(false);
+
     c.bench_function("inst get env bool key", |b| {
         b.iter(|| {
             let res = v.get::<bool>("level1.key_env").unwrap();
@@ -69,6 +92,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             }
         })
     });
+
+    v.cache(true);
+
+    c.bench_function("inst cached get env bool key", |b| {
+        b.iter(|| {
+            let res = v.get::<bool>("level1.key_env").unwrap();
+            if res {
+                cnt = cnt + 1;
+            }
+        })
+    });
+    v.cache(false);
+
 }
 
 
