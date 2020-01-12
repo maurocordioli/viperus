@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate log;
-extern crate clap;
+ 
 extern crate viperus;
 extern crate tempfile;
 use std::io::Write;

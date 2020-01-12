@@ -1,14 +1,17 @@
 #[macro_use]
 extern crate log;
+#[cfg(feature = "fmt-clap")]
 extern crate clap;
 extern crate viperus;
 
+#[cfg(feature = "fmt-clap")]
 use clap::{App, Arg, SubCommand};
 fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
 
 #[test]
+#[cfg(feature = "fmt-clap")]
 fn test_main() {
     init();
     info!("test clap args");

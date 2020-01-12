@@ -109,6 +109,7 @@ where
 }
 
 ///load_clap  brings in  the clap magic
+#[cfg(feature = "fmt-clap")]
 pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().load_clap(matches)
 }

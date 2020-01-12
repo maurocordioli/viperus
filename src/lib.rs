@@ -34,7 +34,7 @@ mod map;
 pub use adapter::AdapterResult;
 pub use adapter::ConfigAdapter;
 use std::cell::RefCell;
-
+use std::marker::PhantomData;
 #[cfg(feature="ftm-calp")]
 use clap;
 
@@ -44,6 +44,7 @@ use std::error::Error;
 use std::fmt::Display;
 
 use std::str::FromStr;
+
 
 #[cfg(feature = "global")]
 mod global;
@@ -94,13 +95,20 @@ pub struct Viperus<'a> {
     default_map: map::Map,
     config_map: map::Map,
     override_map: map::Map,
+
+    #[cfg(feature = "fmt-clap")] 
     clap_matches: clap::ArgMatches<'a>,
+    #[cfg(not(feature = "fmt-clap"))]    
+    clap_matches: PhantomData<&'a u32>,
+    
+    #[cfg(feature = "fmt-clap")] 
     clap_bonds: std::collections::HashMap<String, String>,
     loaded_files: std::collections::LinkedList<(String, Format)>,
     #[cfg(feature = "cache")]
     cache_map: RefCell<map::Map>,
     #[cfg(feature = "cache")]
     cache_use: bool,
+
 }
 
 impl<'v> Default for Viperus<'v> {
@@ -115,7 +123,12 @@ impl<'v> Viperus<'v> {
             default_map: map::Map::new(),
             config_map: map::Map::new(),
             override_map: map::Map::new(),
+            #[cfg(feature = "fmt-clap")]
             clap_matches: clap::ArgMatches::default(),
+            #[cfg(not(feature = "fmt-clap"))]
+            clap_matches:PhantomData,
+            
+            #[cfg(feature = "fmt-clap")]
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
             #[cfg(feature = "cache")]
@@ -126,6 +139,7 @@ impl<'v> Viperus<'v> {
     }
 
     ///load_clap  brings in  the clap magic
+    #[cfg(feature = "fmt-clap")] 
     pub fn load_clap(&mut self, matches: clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
 
