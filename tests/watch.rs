@@ -13,7 +13,7 @@ fn init() {
 }
 
 #[test]
-#[cfg(feature = "fmt-watch")]
+#[cfg(feature = "watch")]
 fn test_watch() {
     init();
 
