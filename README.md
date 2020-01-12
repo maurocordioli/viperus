@@ -8,7 +8,7 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
-* 0.1.5 add cache fetaure, modular "featurization"
+* 0.1.6 add cache fetaure, modular "featurization"
 * 0.1.5 add watch_all files with autoreload
 * 0.1.4 add format : java properties files
 * 0.1.3 better clap args : default values
