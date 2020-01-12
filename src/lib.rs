@@ -23,6 +23,7 @@
 extern crate lazy_static;
 
 extern crate serde;
+#[cfg(feature="ftm-yaml")]
 extern crate serde_yaml;
 #[macro_use]
 extern crate log;
@@ -34,7 +35,9 @@ pub use adapter::AdapterResult;
 pub use adapter::ConfigAdapter;
 use std::cell::RefCell;
 
+#[cfg(feature="ftm-calp")]
 use clap;
+
 pub use map::Map;
 pub use map::ViperusValue;
 use std::error::Error;
@@ -71,10 +74,15 @@ macro_rules! path {
 #[derive(Debug, Clone, Copy)]
 pub enum Format {
     Auto,
+    #[cfg(feature = "fmt-yaml")]
     YAML,
+    #[cfg(feature = "fmt-json")]
     JSON,
+    #[cfg(feature = "fmt-toml")] 
     TOML,
+    #[cfg(feature = "fmt-env")] 
     ENV,
+    #[cfg(feature = "fmt-javaproperties")]
     JAVAPROPERTIES,
 }
 
@@ -89,7 +97,9 @@ pub struct Viperus<'a> {
     clap_matches: clap::ArgMatches<'a>,
     clap_bonds: std::collections::HashMap<String, String>,
     loaded_files: std::collections::LinkedList<(String, Format)>,
+    #[cfg(feature = "cache")]
     cache_map: RefCell<map::Map>,
+    #[cfg(feature = "cache")]
     cache_use: bool,
 }
 
@@ -108,7 +118,9 @@ impl<'v> Viperus<'v> {
             clap_matches: clap::ArgMatches::default(),
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
+            #[cfg(feature = "cache")]
             cache_map: RefCell::new(map::Map::new()),
+            #[cfg(feature = "cache")]
             cache_use: false,
         }
     }
@@ -129,8 +141,12 @@ impl<'v> Viperus<'v> {
     ///reload   all config file preserving the order
     pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
         self.config_map.drain();
-        if self.cache_use {
-            self.cache(true);
+
+        #[cfg(feature = "cache")]
+        {
+            if self.cache_use {
+                self.cache(true);
+            }
         }
 
         let lf = &self.loaded_files.iter().cloned().collect::<Vec<_>>();
@@ -156,6 +172,7 @@ impl<'v> Viperus<'v> {
         debug!("loading  {}", name);
 
         match format {
+            #[cfg(feature = "fmt-yaml")]   
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
                 adt.load_file(name).unwrap();
@@ -163,6 +180,7 @@ impl<'v> Viperus<'v> {
 
                 self.load_adapter(&mut adt)
             }
+            #[cfg(feature = "fmt-json")]   
             Format::JSON => {
                 let mut adt = adapter::JsonAdapter::new();
                 adt.load_file(name).unwrap();
@@ -170,6 +188,8 @@ impl<'v> Viperus<'v> {
 
                 self.load_adapter(&mut adt)
             }
+   
+            #[cfg(feature = "fmt-toml")]   
             Format::TOML => {
                 let mut adt = adapter::TomlAdapter::new();
                 adt.load_file(name).unwrap();
@@ -178,6 +198,7 @@ impl<'v> Viperus<'v> {
                 self.load_adapter(&mut adt)
             }
 
+            #[cfg(feature = "fmt-env")]   
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
                 adt.load_file(name).unwrap();
@@ -187,7 +208,8 @@ impl<'v> Viperus<'v> {
                 self.load_adapter(&mut adt)
             }
 
-            Format::JAVAPROPERTIES => {
+            #[cfg(feature = "fmt-javaproperties")] 
+             Format::JAVAPROPERTIES => {
                 let mut adt = adapter::JavaPropertiesAdapter::new();
                 adt.load_file(name).unwrap();
                 self.load_adapter(&mut adt)
@@ -221,24 +243,33 @@ impl<'v> Viperus<'v> {
         T: FromStr,
         T: Clone,
     {
-        if self.cache_use {
-            let res = self.cache_map.borrow().get(key);
+        #[cfg(feature = "cache")]
+        {
+            if self.cache_use {
+                let res = self.cache_map.borrow().get(key);
 
-            if let Some(v) = res {
-                return Some(v);
+                if let Some(v) = res {
+                    return Some(v);
+                }
             }
         }
 
         let res = self.override_map.get(key);
 
         if let Some(v) = res {
-            if self.cache_use {
-                self.cache_map.borrow_mut().add(key, v.clone());
+            #[cfg(feature = "cache")]
+            {
+                if self.cache_use {
+                    self.cache_map.borrow_mut().add(key, v.clone());
+                }
             }
             return Some(v);
         }
-
+    
+        #[cfg(feature = "fmt-clap")] 
         let src = self.clap_bonds.get::<String>(&key.to_owned());
+        #[cfg(feature = "fmt-clap")] 
+        {
         if let Some(dst) = src {
             debug!("clap mapped {}=>{}", key, dst);
 
@@ -248,8 +279,11 @@ impl<'v> Viperus<'v> {
 
                 if let Some(v) = res {
                     let mv = &map::ViperusValue::Str(v.to_owned());
-                    if self.cache_use {
-                        self.cache_map.borrow_mut().add(key, mv.clone().into());
+                    #[cfg(feature = "cache")]
+                    {
+                        if self.cache_use {
+                            self.cache_map.borrow_mut().add(key, mv.clone().into());
+                        }
                     }
 
                     return Some(mv.clone().into());
@@ -257,16 +291,23 @@ impl<'v> Viperus<'v> {
             }
         }
 
+    }
+
         let cfg = self.config_map.get(key);
 
         if cfg.is_some() {
-            if self.cache_use {
-                self.cache_map.borrow_mut().add(key, cfg.clone().unwrap());
+            #[cfg(feature = "cache")]
+            {
+                if self.cache_use {
+                    self.cache_map.borrow_mut().add(key, cfg.clone().unwrap());
+                }
             }
 
             return cfg;
         }
 
+        #[cfg(feature = "fmt-clap")] 
+   {
         //default option value
         if let Some(dst) = src {
             debug!("clap default mapped {}=>{}", key, dst);
@@ -277,19 +318,26 @@ impl<'v> Viperus<'v> {
                 if let Some(v) = res {
                     let pval = v.parse::<T>().ok();
                     //UHMMMM TODO
-                    if self.cache_use {
-                        self.cache_map.borrow_mut().add(key, pval.clone().unwrap());
+                    #[cfg(feature = "cache")]
+                    {
+                        if self.cache_use {
+                            self.cache_map.borrow_mut().add(key, pval.clone().unwrap());
+                        }
                     }
 
                     return pval;
                 }
             }
         }
+    }
 
         let def = self.default_map.get(key);
 
-        if self.cache_use && def.is_some() {
-            self.cache_map.borrow_mut().add(key, def.clone().unwrap());
+        #[cfg(feature = "cache")]
+        {
+            if self.cache_use && def.is_some() {
+                self.cache_map.borrow_mut().add(key, def.clone().unwrap());
+            }
         }
 
         def
@@ -306,6 +354,7 @@ impl<'v> Viperus<'v> {
         self.override_map.add(key, value)
     }
 
+    #[cfg(feature = "fmt-clap")]   
     pub fn bond_clap(&mut self, src: &str, dst: &str) -> Option<String> {
         self.clap_bonds.insert(dst.to_owned(), src.to_owned())
     }
@@ -322,6 +371,7 @@ impl<'v> Viperus<'v> {
     }
 
     /// cache the query results for small configs speedup is x4
+    #[cfg(feature = "cache")]
     pub fn cache(&mut self, enable: bool) {
         self.cache_use = enable;
 
@@ -342,6 +392,7 @@ mod tests {
 
     #[test]
     #[should_panic]
+    #[cfg(feature = "fmt-json")]   
     fn lib_invalid_format() {
         init();
         let mut v = Viperus::default();
@@ -354,20 +405,23 @@ mod tests {
         let fe = format!("{}", e);
         let ex: Box<dyn Error> = Box::new(e);
         debug!("fe {}", fe);
-
         assert_ne!(ex.to_string(), "");
     }
     #[test]
     fn lib_works() {
         init();
         let mut v = Viperus::default();
+        #[cfg(feature = "fmt-json")]   
         v.load_file(&path!(".", "assets", "test.json"), Format::JSON)
             .unwrap();
+        #[cfg(feature = "fmt-yaml")]   
         v.load_file(&path!(".", "assets", "test.yaml"), Format::YAML)
             .unwrap();
+        #[cfg(feature = "fmt-toml")]   
         v.load_file(&path!(".", "assets", "test.toml"), Format::TOML)
             .unwrap();
 
+        #[cfg(feature = "fmt-javaproperties")]      
         v.load_file(
             &path!(".", "assets", "test.properties"),
             Format::JAVAPROPERTIES,
@@ -379,50 +433,68 @@ mod tests {
 
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
+        #[cfg(feature = "fmt-cache")] 
+   {
         v.cache(true);
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
         v.cache(false);
-
+   }
         //test config
+        #[cfg(feature = "fmt-json")] 
+        {
         let json_b = v.get::<bool>("level1.key_json").unwrap();
         assert_eq!(true, json_b);
-
+        }
+        #[cfg(feature = "fmt-yaml")] 
+   {
         let jyaml_b = v.get::<bool>("level1.key_yaml").unwrap();
         assert_eq!(true, jyaml_b);
+   }
 
+   #[cfg(feature = "fmt-javaproperties")] 
+   {
         let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
         assert_eq!(true, jprop_b);
-
+   
         //test config with cache
-        v.cache(true);
-        let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
-        assert_eq!(true, jprop_b);
-        let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
-        assert_eq!(true, jprop_b);
-        v.cache(false);
-
+        #[cfg(feature = "cache")]
+        {
+            v.cache(true);
+            let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+            assert_eq!(true, jprop_b);
+            let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+            assert_eq!(true, jprop_b);
+            v.cache(false);
+        }
+    }
         //test default
         v.add_default("default", true);
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
 
         //test default with cache
-        v.cache(true);
-        assert_eq!(v.get::<bool>("default").unwrap(), true);
-        assert_eq!(v.get::<bool>("default").unwrap(), true);
-        v.cache(false);
+        #[cfg(feature = "cache")]
+        {
+            v.cache(true);
+            assert_eq!(v.get::<bool>("default").unwrap(), true);
+            assert_eq!(v.get::<bool>("default").unwrap(), true);
+            v.cache(false);
+        }
 
         //reload
         v.reload().unwrap();
 
         assert_eq!(v.get::<bool>("default").unwrap(), true);
         //reload with cache
-        v.cache(true);
-        v.reload().unwrap();
-        assert_eq!(v.get::<bool>("default").unwrap(), true);
-        v.cache(false);
+        #[cfg(feature = "cache")]
+        {
+            v.cache(true);
+            v.reload().unwrap();
+            assert_eq!(v.get::<bool>("default").unwrap(), true);
+            v.cache(false);
+        }
     }
 }

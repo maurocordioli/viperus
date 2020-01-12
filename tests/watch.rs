@@ -13,6 +13,7 @@ fn init() {
 }
 
 #[test]
+#[cfg(feature = "fmt-watch")]
 fn test_watch() {
     init();
 
@@ -23,6 +24,7 @@ fn test_watch() {
     let cfg_path=cfg.into_temp_path();
     debug!("temp file is {}",cfg_path.to_str().unwrap());
     
+    #[cfg(feature = "fmt-yaml")]
     viperus::load_file(cfg_path.to_str().unwrap(), viperus::Format::YAML).unwrap();
     viperus::watch_all().unwrap();
 

@@ -8,6 +8,7 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
+* 0.1.5 add cache fetaure, modular "featurization"
 * 0.1.5 add watch_all files with autoreload
 * 0.1.4 add format : java properties files
 * 0.1.3 better clap args : default values
@@ -15,9 +16,8 @@ no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Vip
 * 0.1.1 fixes dcs
 * 0.1.0 first release
 
-
 ## What is Viperus?
-handle some types of configuration needs and formats. 
+a package that handles  some types of configuration  modes with differente formats,cli params and enviroment . 
 It supports:
 
 * setting defaults
@@ -27,6 +27,7 @@ It supports:
 * setting explicit values
 * reload of all files
 * whatch config files and reolad all in something changes
+* caching
 
 ## Why Viperus?
 
@@ -47,29 +48,53 @@ you can create a stand alone Viperus object or "enjoy" a global instance ( threa
 via shadow functions load_file|get|add|load_clap that are routed to the static instance.  
 
 ```rust
-     //add a config file & enviroment variables
-     viperus::load_file(".env", viperus::Format::ENV).unwrap();
-     //add another file
-     viperus::load_file("user.env", viperus::Format::ENV).unwrap();
+//add a config file & enviroment variables
+viperus::load_file(".env", viperus::Format::ENV).unwrap();
+//add another file
+viperus::load_file("user.env", viperus::Format::ENV).unwrap();
      
-     //watch the config and autoreload if something changes
-     viperus::watch_all();
-
-     let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
+//watch the config and autoreload if something changes
+viperus::watch_all();
+   
+//enable caching  -- file reload invalidates cache
+// cache i thread safe for the global "static" instance
+viperus::cache(true);
+let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
 ```
 by the way , Yes I konw globals are evil. but as I was inspired by the  go package viper....
 if you dislike globals you can opt-out disabling in your cargo.toml the feature "global".
+   
+## caching
+you can enable caching for a x4 speed-up. 
+cache is thread safe only when used with the global instance taht is behing a arc mutex
+```rust
+     viperus::cache(true);
+```
+reloading files with an excplicit ``` viperus::reload() ``` , 
+or for effect of a file change when file watch is active invalidates the cache.
 
 ## logging/debug
 the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST_LOG=viperus=[DEBUG LEVEL] with
 [DEBUG LEVEL] = info|warning|debug  or RUST_LOG=[DEBUG LEVEL]
+## features
+the crate in "fetaureized" with the feaures enabled by default 
+*  feature = "fmt-[format]" with [format] in 'json,end,toml,yaml,javaproperties,clap' enabling the realtive format
+*  feature ="global" enabling the global tread safe configuration
+*  feature ="watch" enabling the automatic file reload wirh prerequisite feature=global
+*  feature ="cache" aneglig caching 
 
+single featues could be activated in a selective way  via cargo.toml 
 
-
-## Example
-you can find some integration tests in the test dir and also in the example forlder
-you can run example with cargo
-
+```
+[dependencies.viperus]
+version = "0.1.5"
+default-features = false # do not include the default features, and optionally
+# cherry-pick individual features
+features = ["global", "cache","watch","fmt-yaml"]
+```
+## Examples
+you can find some integration tests in the test dir and also in the example folder
+you can run example with cargo:
 ```
 cargo run --example cli-clap-yaml -- 
 cargo run --example cli-clap-yaml -- -u http://nowhere/api/v1
@@ -80,14 +105,12 @@ the second from the cli arg
 
 ```rust
 
-
- let matches = App::new("My Super Program")
-                          .arg(Arg::with_name("v")
-                               .short("v")
-                               .multiple(true)
-                               .help("Sets the level of verbosity"))
-                          .get_matches();   
-
+let matches = App::new("My Super Program")
+                 .arg(Arg::with_name("v")
+                 .short("v")
+                 .multiple(true)
+                 .help("Sets the level of verbosity"))
+                 .get_matches();   
 let mut v = Viperus::new();
 
 //enable clap
@@ -119,7 +142,7 @@ assert_eq!(true, fVerbose);
 * error propagation
 * type inference  for .env and java properties files from defaults 
 * stabilize api
-* documentation
+* improve documentation
 * improve my rust karma
 
 

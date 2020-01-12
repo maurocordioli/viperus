@@ -5,6 +5,7 @@
 use super::*;
 use std::sync::mpsc::channel;
 
+#[cfg(feature = "watch")] 
 use notify::Watcher;
 use std::time::Duration;
 
@@ -20,6 +21,7 @@ lazy_static! {
 /// 
 /// the function starts a separate thread
 /// TODO ad an unwatch_all() function;
+#[cfg(feature = "watch")] 
 pub fn watch_all() -> Result<(), Box<dyn Error>> {
     let lf = VIPERUS.lock().unwrap().loaded_file_names();
 
@@ -112,6 +114,7 @@ pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error
 }
 
 /// bond a clap argsument to a config key
+#[cfg(feature = "fmt-clap")]
 pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
     VIPERUS.lock().unwrap().bond_clap(src, dst)
 }
@@ -122,6 +125,7 @@ pub fn reload() -> Result<(), Box<dyn Error>> {
 }
 
 /// cache the query results for small configs speedup is x4 
+#[cfg(feature = "cache")]
 pub fn cache(enable:bool)  {
     VIPERUS.lock().unwrap().cache(enable)
 }

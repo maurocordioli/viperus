@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate log; 
+extern crate log;
 extern crate clap;
 extern crate viperus;
 
@@ -7,7 +7,6 @@ use clap::{App, Arg, SubCommand};
 fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
-
 
 #[test]
 fn test_main() {
@@ -40,28 +39,23 @@ fn test_main() {
         )
         .arg(
             Arg::with_name("nocapture")
-                .long("nocapture")   
+                .long("nocapture")
                 .help("enable no capture"),
         )
         .arg(
             Arg::with_name("showoutput")
-                .long("show-output")   
+                .long("show-output")
                 .help("enable showoutput"),
         )
-        .arg(
-            Arg::with_name("quiet")
-                .long("quiet")   
-                .help("enable quiet"),
-        )
+        .arg(Arg::with_name("quiet").long("quiet").help("enable quiet"))
         .arg(
             Arg::with_name("argdefault")
                 .short("a")
-                .long("argdefault")               
+                .long("argdefault")
                 .help("an argument with default")
                 .takes_value(true)
                 .default_value("none"),
         )
-
         .subcommand(
             SubCommand::with_name("test")
                 .about("controls testing features")
@@ -75,33 +69,39 @@ fn test_main() {
         )
         .get_matches();
 
-    
     let mut v = viperus::Viperus::new();
+    #[cfg(feature = "fmt-env")]
     v.load_file(".env", viperus::Format::ENV).unwrap();
+    #[cfg(feature = "fmt-clap")]{
     v.load_clap(matches).expect("strange...");
     v.bond_clap("v", "verbose");
     v.bond_clap("argdefault", "argdefault");
+    }
     v.add("verbose", true);
+
 
     let f_verbose = v.get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
-    
-    
 
-    info!("RUST_LOG={}",dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
+    #[cfg(feature = "fmt-env")]
+    info!(
+        "RUST_LOG={}",
+        dotenv::var("RUST_LOG").unwrap_or(String::from("none"))
+    );
     assert_eq!(true, f_verbose);
 
-    v.cache(true);
-    let f_verbose = v.get::<bool>("verbose").unwrap();
-    assert_eq!(true, f_verbose);
-    let f_verbose = v.get::<bool>("verbose").unwrap();
-    assert_eq!(true, f_verbose);    
-    v.cache(false);
+    #[cfg(feature = "cache")]
+    {
+        v.cache(true);
+        let f_verbose = v.get::<bool>("verbose").unwrap();
+        assert_eq!(true, f_verbose);
+        let f_verbose = v.get::<bool>("verbose").unwrap();
+        assert_eq!(true, f_verbose);
+        v.cache(false);
+    }
 
-
+    #[cfg(feature = "fmt-clap")]{
     let f_argdefault = v.get::<String>("argdefault").unwrap();
     assert_eq!("none", f_argdefault);
-
-
-   
+    }
 }

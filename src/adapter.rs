@@ -2,18 +2,28 @@
 
 pub type AdapterResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+#[cfg(feature = "fmt-yaml")]
 mod ayaml;
+#[cfg(feature = "fmt-json")] 
 mod ajson;
+#[cfg(feature = "fmt-toml")] 
 mod atoml;
+#[cfg(feature = "fmt-env")] 
 mod aenv;
+#[cfg(feature = "fmt-javaproperties")] 
 mod aprop;
 
 
+#[cfg(feature = "fmt-yaml")] 
 pub use ayaml::*;
+#[cfg(feature = "fmt-json")] 
 pub use ajson::*;
+#[cfg(feature = "fmt-toml")] 
 pub use atoml::*;
-pub use aenv::*;
-pub use aprop::*;
+#[cfg(feature = "fmt-env")] 
+ pub use aenv::*;
+ #[cfg(feature = "fmt-javaproperties")]
+ pub use aprop::*;
 
 /// ConfigAdapter mediates from varius config format and Viperus
 pub trait ConfigAdapter {
@@ -34,6 +44,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "fmt-json")]
     fn adapter_json_load() {
         init();
 
@@ -48,6 +59,7 @@ mod tests {
 
 
     #[test]
+    #[cfg(feature = "fmt-yaml")]
     fn adapter_yaml_load() {
         init();
 
@@ -61,6 +73,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "fmt-toml")]
     fn adapter_toml_load() {
         init();
 

@@ -1,9 +1,10 @@
 #[macro_use]
 extern crate viperus;
 extern crate env_logger;
+#[cfg(feature = "fmt-clap")]
 extern crate clap;
 
- 
+#[cfg(feature = "fmt-clap")] 
 fn main() {
 
     env_logger::init();
@@ -33,5 +34,10 @@ fn main() {
     println!("this is cli-clap-yaml talkin.");
     println!("the wonderful uel is {}",viperus::get::<String>("service.url").unwrap());
 
+
+}
+
+#[cfg(not(feature = "fmt-clap"))]
+fn main() {
 
 }

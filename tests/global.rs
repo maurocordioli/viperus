@@ -1,8 +1,9 @@
 #[macro_use]
 extern crate log;
+#[cfg(feature = "clap")] 
 extern crate clap;
 extern crate viperus;
-
+#[cfg(feature = "clap")] 
 use clap::{App, Arg, SubCommand};
 
 fn init() {
@@ -10,12 +11,15 @@ fn init() {
 }
 
 #[test]
+#[cfg(feature = "global")] 
 fn test_global() {
     init();
 
+    #[cfg(feature = "fmt-env")]{
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
     let ok = viperus::get::<String>("TEST_BOOL").unwrap();
     assert_eq!("true", ok);
+    }
 
     viperus::add_default("default", true);
     assert_eq!(viperus::get::<bool>("default").unwrap(), true);
@@ -39,10 +43,12 @@ impl viperus::ConfigAdapter for ZeroAdapter {
 }
 
 #[test]
+#[cfg(all(feature = "global",feature="clap"))] 
 fn test_main() {
     init();
     info!("test clap args");
 
+    #[cfg(feature = "fmt-clap")]    
     let matches = App::new("My Super Program")
         .version("1.0")
         .author("Kevin K. <kbknapp@gmail.com>")
@@ -91,9 +97,12 @@ fn test_main() {
         )
         .get_matches();
 
+    #[cfg(feature = "fmt-env")]    
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
+    #[cfg(feature = "fmt-clap")]{
     viperus::load_clap(matches).expect("strange...");
     viperus::bond_clap("v", "verbose");
+    }
     viperus::add("verbose", true);
 
     let f_verbose = viperus::get::<bool>("verbose").unwrap();
@@ -107,10 +116,12 @@ fn test_main() {
 }
 
 #[test]
+#[cfg(feature = "gloabal")] 
 fn test_adapter() {
     init();
     info!("test adapter creation");
 
+    #[cfg(feature = "fmt-env")]
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
     let mut adp = ZeroAdapter {};
     viperus::load_adapter(&mut adp).unwrap();
