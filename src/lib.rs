@@ -38,7 +38,7 @@ pub use map::Map;
 pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
-use std::path::PathBuf;
+
 use std::str::FromStr;
 
 #[cfg(feature = "global")]

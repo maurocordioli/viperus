@@ -56,13 +56,14 @@ lazy_static="1.4.0"
 java-properties = "1.2.0"
 notify = "4.0.0"
 
-[dev-dependencies]
+[dev-dependencies] 
 env_logger = "0.7.1"
 tempfile = "3.1.0"
 criterion = "0.3.0"
 
 [[bench]]
 name = "benchmark_cache"
+
 harness = false
 
 [features]
