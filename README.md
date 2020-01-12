@@ -87,7 +87,7 @@ single featues could be activated in a selective way  via cargo.toml
 
 ```
 [dependencies.viperus]
-version = "0.1.5"
+version = "0.1.6"
 default-features = false # do not include the default features, and optionally
 # cherry-pick individual features
 features = ["global", "cache","watch","fmt-yaml"]
