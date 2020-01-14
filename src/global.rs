@@ -12,6 +12,7 @@ use std::time::Duration;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+#[cfg(feature = "global")] 
 lazy_static! {
     /// the global instance
     static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = { Arc::new(Mutex::new(Viperus::new())) };

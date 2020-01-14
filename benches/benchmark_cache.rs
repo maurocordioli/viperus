@@ -2,13 +2,16 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use viperus::*;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    #[cfg(feature = "fmt-yaml")]
+    #[cfg(all(feature = "fmt-yaml",feature="global"))]
     viperus::load_file(&path!(".", "assets", "cache.yaml"), Format::YAML).unwrap();
-    #[cfg(feature = "fmt-env")]
+    #[cfg(all(feature = "fmt-env",feature="global"))]
     viperus::load_file(&path!(".", "assets", "cache.env"), Format::ENV).unwrap();
+    
+    #[cfg(feature = "global")]
     viperus::add("level1.key_add", true);
 
     let mut cnt = 0;
+    #[cfg(feature = "global")]
     c.bench_function("glob get bconfig bool key", |b| {
         b.iter(|| {
             let res = viperus::get::<bool>("level1.key_bool").unwrap();
@@ -17,6 +20,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             };
         })
     });
+    #[cfg(feature = "global")]
     c.bench_function("glob get override bool key", |b| {
         b.iter(|| {
             let res = viperus::get::<bool>("level1.key_add").unwrap();
@@ -26,7 +30,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
-    #[cfg(feature = "fmt-env")]
+    #[cfg(all(feature = "fmt-env", feature = "global"))]
     c.bench_function("glob get env bool key", |b| {
         b.iter(|| {
             let res = viperus::get::<bool>("level1.key_env").unwrap();

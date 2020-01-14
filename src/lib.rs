@@ -20,8 +20,12 @@
 //!
 #![warn(clippy::all)]
 #[macro_use]
+
+#[cfg(feature="global")]
 extern crate lazy_static;
 
+
+#[cfg(any(feature="fmt-yaml",feature="fmt-toml"))]
 extern crate serde;
 #[cfg(feature="ftm-yaml")]
 extern crate serde_yaml;
@@ -33,6 +37,8 @@ mod adapter;
 mod map;
 pub use adapter::AdapterResult;
 pub use adapter::ConfigAdapter;
+
+#[cfg(feature="cache")]
 use std::cell::RefCell;
 use std::marker::PhantomData;
 #[cfg(feature="ftm-calp")]
