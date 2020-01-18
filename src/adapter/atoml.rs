@@ -34,7 +34,7 @@ impl TomlAdapter {
 }
 impl ConfigAdapter for TomlAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
-        self.data = toml::from_str::<toml::map::Map<String, toml::Value>>(&self.source).unwrap();
+        self.data = toml::from_str::<toml::map::Map<String, toml::Value>>(&self.source)?;
 
         Ok(())
     }

@@ -23,7 +23,7 @@ impl EnvAdapter {
 
     pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
     
-        self.real_path=dotenv::from_filename(name).unwrap();
+        self.real_path=dotenv::from_filename(name)?;
         debug!("{:?}",self.real_path);
         Ok(())
     }

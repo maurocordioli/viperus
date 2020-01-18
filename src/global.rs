@@ -94,8 +94,8 @@ where
     T: FromStr,
     T: Clone,
 {
-    let v = VIPERUS.lock().unwrap();
-    v.get(key)
+    VIPERUS.lock().unwrap().get(key)
+    
 }
 
 /// add an default value to the global cofiguration

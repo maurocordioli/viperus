@@ -62,11 +62,20 @@ pub use global::*;
 pub enum ViperusError {
     Generic(String),
 }
-impl Error for ViperusError {}
+impl Error for ViperusError {
+
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self {
+
+            _ => None
+        }
+    
+    }
+}
 impl Display for ViperusError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            ViperusError::Generic(s) => write!(formatter, "Generic Error: {}", s),
+            ViperusError::Generic(s) => write!(formatter, "Viperus Generic Error: {}", s),
         }
     }
 }
@@ -195,7 +204,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-yaml")]   
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
-                adt.load_file(name).unwrap();
+                adt.load_file(name)?;
                 self.loaded_files.push_back((name.to_owned(), format));
 
                 self.load_adapter(&mut adt)
@@ -203,7 +212,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-json")]   
             Format::JSON => {
                 let mut adt = adapter::JsonAdapter::new();
-                adt.load_file(name).unwrap();
+                adt.load_file(name)?;
                 self.loaded_files.push_back((name.to_owned(), format));
 
                 self.load_adapter(&mut adt)
@@ -212,7 +221,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-toml")]   
             Format::TOML => {
                 let mut adt = adapter::TomlAdapter::new();
-                adt.load_file(name).unwrap();
+                adt.load_file(name)?;
                 self.loaded_files.push_back((name.to_owned(), format));
 
                 self.load_adapter(&mut adt)
@@ -221,7 +230,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-env")]   
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
-                adt.load_file(name).unwrap();
+                adt.load_file(name)?;
 
                 self.loaded_files
                     .push_back((adt.get_real_path().to_str().unwrap().to_owned(), format));
@@ -246,7 +255,7 @@ impl<'v> Viperus<'v> {
         &mut self,
         adt: &mut dyn adapter::ConfigAdapter,
     ) -> Result<(), Box<dyn Error>> {
-        adt.parse().unwrap();
+        adt.parse()?;
         self.config_map.merge(&adt.get_map());
         Ok(())
     }

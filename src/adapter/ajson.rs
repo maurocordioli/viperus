@@ -35,7 +35,7 @@ impl JsonAdapter {
 impl ConfigAdapter for JsonAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
         self.data =
-            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&self.source).unwrap();
+            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&self.source)?;
 
         Ok(())
     }
