@@ -40,7 +40,7 @@ pub use adapter::ConfigAdapter;
 
 #[cfg(feature="cache")]
 use std::cell::RefCell;
-use std::marker::PhantomData;
+
 #[cfg(feature="ftm-calp")]
 use clap;
 
