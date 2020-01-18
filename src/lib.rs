@@ -14,8 +14,8 @@
 //! Viperus uses the following decreasing precedence order.
 //! * explicit call to `add`
 //! * clap flag
-//! * env
 //! * config
+//! * env variables
 //! * default
 //!
 #![warn(clippy::all)]
@@ -48,6 +48,7 @@ use std::error::Error;
 use std::fmt::Display;
 
 use std::str::FromStr;
+
 
 #[cfg(feature = "global")]
 mod global;
@@ -108,7 +109,7 @@ pub struct Viperus<'a> {
     #[cfg(feature = "fmt-clap")]
     clap_matches: clap::ArgMatches<'a>,
     #[cfg(not(feature = "fmt-clap"))]
-    clap_matches: PhantomData<&'a u32>,
+    clap_matches: std::marker::PhantomData<&'a u32>,
 
     #[cfg(feature = "fmt-clap")]
     clap_bonds: std::collections::HashMap<String, String>,
@@ -118,10 +119,8 @@ pub struct Viperus<'a> {
     #[cfg(feature = "cache")]
     cache_use: bool,
 
-    #[cfg(feature = "fmt-env")]
     enable_automatic_env: bool,
 
-    #[cfg(feature = "fmt-env")]
     env_prefix: String,
 }
 
@@ -140,7 +139,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-clap")]
             clap_matches: clap::ArgMatches::default(),
             #[cfg(not(feature = "fmt-clap"))]
-            clap_matches: PhantomData,
+            clap_matches: std::marker::PhantomData,
             #[cfg(feature = "fmt-clap")]
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
@@ -148,9 +147,8 @@ impl<'v> Viperus<'v> {
             cache_map: RefCell::new(map::Map::new()),
             #[cfg(feature = "cache")]
             cache_use: false,
-            #[cfg(feature = "fmt-env")]
+            
             enable_automatic_env: false,
-            #[cfg(feature = "fmt-env")]
             env_prefix: String::default(),
         }
     }
