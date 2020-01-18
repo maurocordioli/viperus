@@ -126,8 +126,10 @@ pub fn reload() -> Result<(), Box<dyn Error>> {
 }
 
 /// cache the query results for small configs speedup is x4
+///from v 0.1.9 returns the previus state , useful for test setups.
+  
 #[cfg(feature = "cache")]
-pub fn cache(enable: bool) {
+pub fn cache(enable: bool) -> bool {
     VIPERUS.lock().unwrap().cache(enable)
 }
 

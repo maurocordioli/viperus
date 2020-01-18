@@ -29,7 +29,7 @@ extern crate serde;
 extern crate serde_yaml;
 #[macro_use]
 extern crate log;
-extern crate dirs;
+ 
 
 mod adapter;
 mod map;
@@ -438,14 +438,18 @@ impl<'v> Viperus<'v> {
     }
 
     /// cache the query results for small configs speedup is x4
+    ///from v 0.1.9 returns the previus state , useful for test setups.
     #[cfg(feature = "cache")]
-    pub fn cache(&mut self, enable: bool) {
+    pub fn cache(&mut self, enable: bool) -> bool {
+        let result=self.cache_use;
         self.cache_use = enable;
 
         if self.cache_use {
             let cache_old = &mut map::Map::new();
             std::mem::swap(cache_old, &mut self.cache_map.borrow_mut());
         }
+
+        result
     }
 }
 

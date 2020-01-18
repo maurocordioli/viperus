@@ -8,6 +8,7 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
+* 0.1.9 optional automatic prefixed enviroment variable mapping,basic error propagation, cleaned dependency
 * 0.1.8 add cache feature, modular "featurization"
 * 0.1.5 add watch_all files with autoreload
 * 0.1.4 add format : java properties files
@@ -21,7 +22,7 @@ a package that handles  some types of configuration  modes with differente forma
 It supports:
 
 * setting defaults
-* reading from JSON, TOML, YAML, envfile ,java properties config files
+* reading from JSON, TOML, YAML, dotenv file ,java properties config files
 * reading from environment variables
 * reading from Clap command line flags
 * setting explicit values
@@ -37,8 +38,8 @@ Viperus uses the following decreasing precedence order.
 
  * explicit call to `add`
  * clap flag
- * env
  * config
+ * enviroment variables
  * default
 
 Viperus merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
@@ -48,11 +49,16 @@ you can create a stand alone Viperus object or "enjoy" a global instance ( threa
 via shadow functions load_file|get|add|load_clap that are routed to the static instance.  
 
 ```rust
-//add a config file & enviroment variables
+//add a dotenv config file , keys defautls di env variables
 viperus::load_file(".env", viperus::Format::ENV).unwrap();
 //add another file
 viperus::load_file("user.env", viperus::Format::ENV).unwrap();
-     
+
+ 
+//automatically map env variable staring with "TEST_" to config keys
+viperus::set_env_prefix("TEST_");
+viperus::automatic_env(true);
+
 //watch the config and autoreload if something changes
 viperus::watch_all();
    
@@ -77,18 +83,19 @@ or for effect of a file change when file watch is active invalidates the cache.
 the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST_LOG=viperus=[DEBUG LEVEL] with
 [DEBUG LEVEL] = info|warning|debug  or RUST_LOG=[DEBUG LEVEL]
 ## features
-the crate in "fetaureized" with the feaures enabled by default 
-*  feature = "fmt-[format]" with [format] in 'json,end,toml,yaml,javaproperties,clap' enabling the realtive format
+the crate in "featurized" with the features enabled by default 
+*  feature = "fmt-[format]" with [format] in 'json,end,toml,yaml,javaproperties,clap' enabling the relative format
 *  feature ="global" enabling the global tread safe configuration
 *  feature ="watch" enabling the automatic file reload wirh prerequisite feature=global
 *  feature ="cache" aneglig caching 
 
 single featues could be activated in a selective way  via cargo.toml 
 
-```
+```toml
 [dependencies.viperus]
 version = "0.1.8"
-default-features = false # do not include the default features, and optionally
+# do not include the default features, and optionally
+default-features = false 
 # cherry-pick individual features
 features = ["global", "cache","watch","fmt-yaml"]
 ```
@@ -139,10 +146,9 @@ assert_eq!(true, fVerbose);
 ```
 ## Todo
 * remote configs
-* error propagation
-* type inference  for .env and java properties files from defaults 
+* better error propagation
 * stabilize api
-* improve documentation
+* improve documentation and examples
 * improve my rust karma
 
 

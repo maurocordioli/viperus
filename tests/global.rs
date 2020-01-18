@@ -9,11 +9,15 @@ use clap::{App, Arg, SubCommand};
 fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
-
+/// here there is an error
+/// this integration tests could be run in parallel.... so the caching state is unknown
 #[test]
 #[cfg(feature = "global")]
 fn test_global() {
     init();
+
+    #[cfg(feature = "cache")]
+    let old=viperus::cache(false);
 
     #[cfg(feature = "fmt-env")]
     {
@@ -27,10 +31,14 @@ fn test_global() {
 
     viperus::add("default", false);
 
+    #[cfg(feature = "cache")]
+    viperus::cache(old);
+
+
     assert_ne!(viperus::get::<bool>("default").unwrap(), true);
 }
 
-/// a mokup adapter for testonly
+/// a mockup adapter for testonly
 struct ZeroAdapter {}
 impl viperus::ConfigAdapter for ZeroAdapter {
     fn parse(&mut self) -> viperus::AdapterResult<()> {
