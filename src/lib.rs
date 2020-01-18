@@ -163,7 +163,7 @@ impl<'v> Viperus<'v> {
         self.enable_automatic_env = enable;
     }
 
-    /// prepend 'pefix' when quering enviroment variables
+    /// prepend 'pefix' when quering environment  variables
     pub fn set_env_prefix(&mut self, prefix: &str) {
         self.env_prefix = prefix.to_owned();
     }

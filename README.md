@@ -8,7 +8,7 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
-* 0.1.9 optional automatic prefixed enviroment variable mapping,basic error propagation, cleaned dependency
+* 0.1.9 optional automatic prefixed environment  variable mapping,basic error propagation, cleaned dependency
 * 0.1.8 add cache feature, modular "featurization"
 * 0.1.5 add watch_all files with autoreload
 * 0.1.4 add format : java properties files
@@ -18,7 +18,7 @@ no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Vip
 * 0.1.0 first release
 
 ## What is Viperus?
-a package that handles  some types of configuration  modes with differente formats,cli params and enviroment . 
+a package that handles  some types of configuration  modes with differente formats,cli params and environment  . 
 It supports:
 
 * setting defaults
@@ -39,7 +39,7 @@ Viperus uses the following decreasing precedence order.
  * explicit call to `add`
  * clap flag
  * config
- * enviroment variables
+ * environment  variables
  * default
 
 Viperus merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
