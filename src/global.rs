@@ -5,30 +5,28 @@
 use super::*;
 use std::sync::mpsc::channel;
 
-#[cfg(feature = "watch")] 
+#[cfg(feature = "watch")]
 use notify::Watcher;
 use std::time::Duration;
 
 use std::sync::Arc;
 use std::sync::Mutex;
 
-#[cfg(feature = "global")] 
+#[cfg(feature = "global")]
 lazy_static! {
     /// the global instance
     static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = { Arc::new(Mutex::new(Viperus::new())) };
 }
 
 /// Watch the config files and autoreload in case of change
-/// 
+///
 /// the function starts a separate thread
 /// TODO ad an unwatch_all() function;
-#[cfg(feature = "watch")] 
+#[cfg(feature = "watch")]
 pub fn watch_all() -> Result<(), Box<dyn Error>> {
     let lf = VIPERUS.lock().unwrap().loaded_file_names();
 
     let vip = VIPERUS.clone();
-
-    
 
     std::thread::spawn(move || {
         // Create a channel to receive the events.
@@ -41,7 +39,9 @@ pub fn watch_all() -> Result<(), Box<dyn Error>> {
         // Add a path to be watched. All files and directories at that path and
 
         for f in lf {
-            watcher.watch(f, notify::RecursiveMode::NonRecursive).unwrap();
+            watcher
+                .watch(f, notify::RecursiveMode::NonRecursive)
+                .unwrap();
         }
 
         // This is a simple loop, but you may want to use more complex logic here,
@@ -95,7 +95,6 @@ where
     T: Clone,
 {
     VIPERUS.lock().unwrap().get(key)
-    
 }
 
 /// add an default value to the global cofiguration
@@ -126,11 +125,24 @@ pub fn reload() -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().reload()
 }
 
-/// cache the query results for small configs speedup is x4 
+/// cache the query results for small configs speedup is x4
 #[cfg(feature = "cache")]
-pub fn cache(enable:bool)  {
+pub fn cache(enable: bool) {
     VIPERUS.lock().unwrap().cache(enable)
 }
+
+/// whan enabled viperus will check for an environment variable any time Get request is made
+/// checking  for a environment variable with a name matching the key uppercased and prefixed with the
+/// env_prefix if set.
+pub fn automatic_env(enable: bool) {
+    VIPERUS.lock().unwrap().automatic_env(enable)
+}
+
+
+ /// prepend 'pefix' when quering envirment variables
+ pub fn set_env_prefix( prefix :&str) {
+    VIPERUS.lock().unwrap().set_env_prefix(prefix)
+ }
 
 
 

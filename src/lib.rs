@@ -20,14 +20,12 @@
 //!
 #![warn(clippy::all)]
 #[macro_use]
-
-#[cfg(feature="global")]
+#[cfg(feature = "global")]
 extern crate lazy_static;
 
-
-#[cfg(any(feature="fmt-yaml",feature="fmt-toml"))]
+#[cfg(any(feature = "fmt-yaml", feature = "fmt-toml"))]
 extern crate serde;
-#[cfg(feature="ftm-yaml")]
+#[cfg(feature = "ftm-yaml")]
 extern crate serde_yaml;
 #[macro_use]
 extern crate log;
@@ -38,10 +36,10 @@ mod map;
 pub use adapter::AdapterResult;
 pub use adapter::ConfigAdapter;
 
-#[cfg(feature="cache")]
+#[cfg(feature = "cache")]
 use std::cell::RefCell;
 
-#[cfg(feature="ftm-calp")]
+#[cfg(feature = "ftm-calp")]
 use clap;
 
 pub use map::Map;
@@ -50,7 +48,6 @@ use std::error::Error;
 use std::fmt::Display;
 
 use std::str::FromStr;
-
 
 #[cfg(feature = "global")]
 mod global;
@@ -63,13 +60,10 @@ pub enum ViperusError {
     Generic(String),
 }
 impl Error for ViperusError {
-
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match &self {
-
-            _ => None
+            _ => None,
         }
-    
     }
 }
 impl Display for ViperusError {
@@ -94,9 +88,9 @@ pub enum Format {
     YAML,
     #[cfg(feature = "fmt-json")]
     JSON,
-    #[cfg(feature = "fmt-toml")] 
+    #[cfg(feature = "fmt-toml")]
     TOML,
-    #[cfg(feature = "fmt-env")] 
+    #[cfg(feature = "fmt-env")]
     ENV,
     #[cfg(feature = "fmt-javaproperties")]
     JAVAPROPERTIES,
@@ -111,12 +105,12 @@ pub struct Viperus<'a> {
     config_map: map::Map,
     override_map: map::Map,
 
-    #[cfg(feature = "fmt-clap")] 
+    #[cfg(feature = "fmt-clap")]
     clap_matches: clap::ArgMatches<'a>,
-    #[cfg(not(feature = "fmt-clap"))]    
+    #[cfg(not(feature = "fmt-clap"))]
     clap_matches: PhantomData<&'a u32>,
-    
-    #[cfg(feature = "fmt-clap")] 
+
+    #[cfg(feature = "fmt-clap")]
     clap_bonds: std::collections::HashMap<String, String>,
     loaded_files: std::collections::LinkedList<(String, Format)>,
     #[cfg(feature = "cache")]
@@ -124,6 +118,11 @@ pub struct Viperus<'a> {
     #[cfg(feature = "cache")]
     cache_use: bool,
 
+    #[cfg(feature = "fmt-env")]
+    enable_automatic_env: bool,
+
+    #[cfg(feature = "fmt-env")]
+    env_prefix: String,
 }
 
 impl<'v> Default for Viperus<'v> {
@@ -141,8 +140,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-clap")]
             clap_matches: clap::ArgMatches::default(),
             #[cfg(not(feature = "fmt-clap"))]
-            clap_matches:PhantomData,
-            
+            clap_matches: PhantomData,
             #[cfg(feature = "fmt-clap")]
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
@@ -150,11 +148,28 @@ impl<'v> Viperus<'v> {
             cache_map: RefCell::new(map::Map::new()),
             #[cfg(feature = "cache")]
             cache_use: false,
+            #[cfg(feature = "fmt-env")]
+            enable_automatic_env: false,
+            #[cfg(feature = "fmt-env")]
+            env_prefix: String::default(),
         }
     }
 
+    /// whan enabled viperus will check for an environment variable any time Get request is made
+    /// checking  for a environment variable with a name matching the key uppercased and prefixed with the
+    /// env_prefix if set.
+    /// this uses std:env if feature fmt-env is disabled
+    pub fn automatic_env(&mut self, enable: bool) {
+        self.enable_automatic_env = enable;
+    }
+
+    /// prepend 'pefix' when quering enviroment variables
+    pub fn set_env_prefix(&mut self, prefix: &str) {
+        self.env_prefix = prefix.to_owned();
+    }
+
     ///load_clap  brings in  the clap magic
-    #[cfg(feature = "fmt-clap")] 
+    #[cfg(feature = "fmt-clap")]
     pub fn load_clap(&mut self, matches: clap::ArgMatches<'v>) -> Result<(), Box<dyn Error>> {
         debug!("loading  {:?}", matches);
 
@@ -201,7 +216,7 @@ impl<'v> Viperus<'v> {
         debug!("loading  {}", name);
 
         match format {
-            #[cfg(feature = "fmt-yaml")]   
+            #[cfg(feature = "fmt-yaml")]
             Format::YAML => {
                 let mut adt = adapter::YamlAdapter::new();
                 adt.load_file(name)?;
@@ -209,7 +224,7 @@ impl<'v> Viperus<'v> {
 
                 self.load_adapter(&mut adt)
             }
-            #[cfg(feature = "fmt-json")]   
+            #[cfg(feature = "fmt-json")]
             Format::JSON => {
                 let mut adt = adapter::JsonAdapter::new();
                 adt.load_file(name)?;
@@ -217,8 +232,8 @@ impl<'v> Viperus<'v> {
 
                 self.load_adapter(&mut adt)
             }
-   
-            #[cfg(feature = "fmt-toml")]   
+
+            #[cfg(feature = "fmt-toml")]
             Format::TOML => {
                 let mut adt = adapter::TomlAdapter::new();
                 adt.load_file(name)?;
@@ -227,7 +242,7 @@ impl<'v> Viperus<'v> {
                 self.load_adapter(&mut adt)
             }
 
-            #[cfg(feature = "fmt-env")]   
+            #[cfg(feature = "fmt-env")]
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
                 adt.load_file(name)?;
@@ -237,8 +252,8 @@ impl<'v> Viperus<'v> {
                 self.load_adapter(&mut adt)
             }
 
-            #[cfg(feature = "fmt-javaproperties")] 
-             Format::JAVAPROPERTIES => {
+            #[cfg(feature = "fmt-javaproperties")]
+            Format::JAVAPROPERTIES => {
                 let mut adt = adapter::JavaPropertiesAdapter::new();
                 adt.load_file(name).unwrap();
                 self.load_adapter(&mut adt)
@@ -294,33 +309,32 @@ impl<'v> Viperus<'v> {
             }
             return Some(v);
         }
-    
-        #[cfg(feature = "fmt-clap")] 
+
+        #[cfg(feature = "fmt-clap")]
         let src = self.clap_bonds.get::<String>(&key.to_owned());
-        #[cfg(feature = "fmt-clap")] 
+        #[cfg(feature = "fmt-clap")]
         {
-        if let Some(dst) = src {
-            debug!("clap mapped {}=>{}", key, dst);
+            if let Some(dst) = src {
+                debug!("clap mapped {}=>{}", key, dst);
 
-            if self.clap_matches.is_present(dst) {
-                debug!("clap matched {}=>{}", key, dst);
-                let res = self.clap_matches.value_of(dst);
+                if self.clap_matches.is_present(dst) {
+                    debug!("clap matched {}=>{}", key, dst);
+                    let res = self.clap_matches.value_of(dst);
 
-                if let Some(v) = res {
-                    let mv = &map::ViperusValue::Str(v.to_owned());
-                    #[cfg(feature = "cache")]
-                    {
-                        if self.cache_use {
-                            self.cache_map.borrow_mut().add(key, mv.clone().into());
+                    if let Some(v) = res {
+                        let mv = &map::ViperusValue::Str(v.to_owned());
+                        #[cfg(feature = "cache")]
+                        {
+                            if self.cache_use {
+                                self.cache_map.borrow_mut().add(key, mv.clone().into());
+                            }
                         }
-                    }
 
-                    return Some(mv.clone().into());
+                        return Some(mv.clone().into());
+                    }
                 }
             }
         }
-
-    }
 
         let cfg = self.config_map.get(key);
 
@@ -335,30 +349,54 @@ impl<'v> Viperus<'v> {
             return cfg;
         }
 
-        #[cfg(feature = "fmt-clap")] 
-   {
-        //default option value
-        if let Some(dst) = src {
-            debug!("clap default mapped {}=>{}", key, dst);
-            if !self.clap_matches.is_present(dst) {
-                debug!("clap default matched {}=>{}", key, dst);
-                let res = self.clap_matches.value_of(dst);
-                debug!("clap default value {}=>{} {:?}", key, dst, res);
-                if let Some(v) = res {
-                    let pval = v.parse::<T>().ok();
-                    //UHMMMM TODO
+        #[cfg(feature = "fmt-clap")]
+        {
+            //default option value
+            if let Some(dst) = src {
+                debug!("clap default mapped {}=>{}", key, dst);
+                if !self.clap_matches.is_present(dst) {
+                    debug!("clap default matched {}=>{}", key, dst);
+                    let res = self.clap_matches.value_of(dst);
+                    debug!("clap default value {}=>{} {:?}", key, dst, res);
+                    if let Some(v) = res {
+                        let pval = v.parse::<T>().ok();
+                        //UHMMMM TODO
+                        #[cfg(feature = "cache")]
+                        {
+                            if self.cache_use {
+                                self.cache_map.borrow_mut().add(key, pval.clone().unwrap());
+                            }
+                        }
+
+                        return pval;
+                    }
+                }
+            }
+        }
+
+        if self.enable_automatic_env {
+            debug!("env_prefix {}", self.env_prefix);
+            let env_key = format!("{}{}", self.env_prefix, key.to_uppercase());
+
+            debug!("env_key {}", env_key);
+
+            #[cfg(feature = "fmt-env")]
+            let opt_env_val = dotenv::var(env_key);
+            #[cfg(not(feature = "fmt-env"))]
+            let opt_env_val = std::env::var(env_key);
+            if let Ok(env_val) = opt_env_val {
+                let pval = env_val.parse::<T>().ok();
+                if pval.is_some() {
                     #[cfg(feature = "cache")]
                     {
                         if self.cache_use {
                             self.cache_map.borrow_mut().add(key, pval.clone().unwrap());
                         }
                     }
-
                     return pval;
                 }
             }
         }
-    }
 
         let def = self.default_map.get(key);
 
@@ -383,7 +421,7 @@ impl<'v> Viperus<'v> {
         self.override_map.add(key, value)
     }
 
-    #[cfg(feature = "fmt-clap")]   
+    #[cfg(feature = "fmt-clap")]
     pub fn bond_clap(&mut self, src: &str, dst: &str) -> Option<String> {
         self.clap_bonds.insert(dst.to_owned(), src.to_owned())
     }
@@ -421,7 +459,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    #[cfg(feature = "fmt-json")]   
+    #[cfg(feature = "fmt-json")]
     fn lib_invalid_format() {
         init();
         let mut v = Viperus::default();
@@ -440,17 +478,17 @@ mod tests {
     fn lib_works() {
         init();
         let mut v = Viperus::default();
-        #[cfg(feature = "fmt-json")]   
+        #[cfg(feature = "fmt-json")]
         v.load_file(&path!(".", "assets", "test.json"), Format::JSON)
             .unwrap();
-        #[cfg(feature = "fmt-yaml")]   
+        #[cfg(feature = "fmt-yaml")]
         v.load_file(&path!(".", "assets", "test.yaml"), Format::YAML)
             .unwrap();
-        #[cfg(feature = "fmt-toml")]   
+        #[cfg(feature = "fmt-toml")]
         v.load_file(&path!(".", "assets", "test.toml"), Format::TOML)
             .unwrap();
 
-        #[cfg(feature = "fmt-javaproperties")]      
+        #[cfg(feature = "fmt-javaproperties")]
         v.load_file(
             &path!(".", "assets", "test.properties"),
             Format::JAVAPROPERTIES,
@@ -462,43 +500,43 @@ mod tests {
 
         let s: String = v.get("service.url").unwrap();
         assert_eq!("http://example.com", s);
-        #[cfg(feature = "fmt-cache")] 
-   {
-        v.cache(true);
-        let s: String = v.get("service.url").unwrap();
-        assert_eq!("http://example.com", s);
-        let s: String = v.get("service.url").unwrap();
-        assert_eq!("http://example.com", s);
-        v.cache(false);
-   }
-        //test config
-        #[cfg(feature = "fmt-json")] 
-        {
-        let json_b = v.get::<bool>("level1.key_json").unwrap();
-        assert_eq!(true, json_b);
-        }
-        #[cfg(feature = "fmt-yaml")] 
-   {
-        let jyaml_b = v.get::<bool>("level1.key_yaml").unwrap();
-        assert_eq!(true, jyaml_b);
-   }
-
-   #[cfg(feature = "fmt-javaproperties")] 
-   {
-        let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
-        assert_eq!(true, jprop_b);
-   
-        //test config with cache
-        #[cfg(feature = "cache")]
+        #[cfg(feature = "fmt-cache")]
         {
             v.cache(true);
-            let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
-            assert_eq!(true, jprop_b);
-            let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
-            assert_eq!(true, jprop_b);
+            let s: String = v.get("service.url").unwrap();
+            assert_eq!("http://example.com", s);
+            let s: String = v.get("service.url").unwrap();
+            assert_eq!("http://example.com", s);
             v.cache(false);
         }
-    }
+        //test config
+        #[cfg(feature = "fmt-json")]
+        {
+            let json_b = v.get::<bool>("level1.key_json").unwrap();
+            assert_eq!(true, json_b);
+        }
+        #[cfg(feature = "fmt-yaml")]
+        {
+            let jyaml_b = v.get::<bool>("level1.key_yaml").unwrap();
+            assert_eq!(true, jyaml_b);
+        }
+
+        #[cfg(feature = "fmt-javaproperties")]
+        {
+            let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+            assert_eq!(true, jprop_b);
+
+            //test config with cache
+            #[cfg(feature = "cache")]
+            {
+                v.cache(true);
+                let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+                assert_eq!(true, jprop_b);
+                let jprop_b = v.get::<bool>("level1.java_properties").unwrap();
+                assert_eq!(true, jprop_b);
+                v.cache(false);
+            }
+        }
         //test default
         v.add_default("default", true);
 

@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate log;
-#[cfg(feature = "clap")] 
+#[cfg(feature = "clap")]
 extern crate clap;
 extern crate viperus;
-#[cfg(feature = "clap")] 
+#[cfg(feature = "clap")]
 use clap::{App, Arg, SubCommand};
 
 fn init() {
@@ -11,14 +11,15 @@ fn init() {
 }
 
 #[test]
-#[cfg(feature = "global")] 
+#[cfg(feature = "global")]
 fn test_global() {
     init();
 
-    #[cfg(feature = "fmt-env")]{
-    viperus::load_file(".env", viperus::Format::ENV).unwrap();
-    let ok = viperus::get::<String>("TEST_BOOL").unwrap();
-    assert_eq!("true", ok);
+    #[cfg(feature = "fmt-env")]
+    {
+        viperus::load_file(".env", viperus::Format::ENV).unwrap();
+        let ok = viperus::get::<String>("TEST_BOOL").unwrap();
+        assert_eq!("true", ok);
     }
 
     viperus::add_default("default", true);
@@ -37,18 +38,18 @@ impl viperus::ConfigAdapter for ZeroAdapter {
     }
 
     fn get_map(&self) -> viperus::Map {
-        let  res = viperus::Map::new();
+        let res = viperus::Map::new();
         res
     }
 }
 
 #[test]
-#[cfg(all(feature = "global",feature="clap"))] 
+#[cfg(all(feature = "global", feature = "clap"))]
 fn test_main() {
     init();
     info!("test clap args");
 
-    #[cfg(feature = "fmt-clap")]    
+    #[cfg(feature = "fmt-clap")]
     let matches = App::new("My Super Program")
         .version("1.0")
         .author("Kevin K. <kbknapp@gmail.com>")
@@ -97,17 +98,21 @@ fn test_main() {
         )
         .get_matches();
 
-    #[cfg(feature = "fmt-env")]    
+    #[cfg(feature = "fmt-env")]
     viperus::load_file(".env", viperus::Format::ENV).unwrap();
-    #[cfg(feature = "fmt-clap")]{
-    viperus::load_clap(matches).expect("strange...");
-    viperus::bond_clap("v", "verbose");
+    #[cfg(feature = "fmt-clap")]
+    {
+        viperus::load_clap(matches).expect("strange...");
+        viperus::bond_clap("v", "verbose");
     }
     viperus::add("verbose", true);
 
     let f_verbose = viperus::get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
-    info!("RUST_LOG={}", dotenv::var("RUST_LOG").unwrap_or(String::from("none")));
+    info!(
+        "RUST_LOG={}",
+        dotenv::var("RUST_LOG").unwrap_or(String::from("none"))
+    );
     assert_eq!(true, f_verbose);
 
     viperus::reload().unwrap();
@@ -116,7 +121,7 @@ fn test_main() {
 }
 
 #[test]
-#[cfg(feature = "gloabal")] 
+#[cfg(feature = "global")]
 fn test_adapter() {
     init();
     info!("test adapter creation");
@@ -129,4 +134,47 @@ fn test_adapter() {
 
     let f_verbose = viperus::get::<bool>("verbose").unwrap();
     assert_eq!(true, f_verbose);
+
+    #[cfg(feature = "fmt-env")]
+    {
+        std::env::set_var("TEST_MATCH", "true");
+        viperus::automatic_env(true);
+        viperus::set_env_prefix("TEST_");
+
+        let f_test_match = viperus::get::<bool>("match").unwrap();
+        assert_eq!(true, f_test_match);
+        #[cfg(feature = "cache")]
+        {
+            viperus::cache(true);
+            let f_test_match = viperus::get::<bool>("match").unwrap();
+            assert_eq!(true, f_test_match);
+            let f_test_match = viperus::get::<bool>("match").unwrap();
+            assert_eq!(true, f_test_match);
+        }
+    }
 }
+
+#[test]
+#[cfg(feature = "global")]
+fn test_std_env() {
+    init();
+    info!("test adapter creation");
+
+ 
+        std::env::set_var("TEST_MATCH", "true");
+        viperus::automatic_env(true);
+        viperus::set_env_prefix("TEST_");
+
+        let f_test_match = viperus::get::<bool>("match").unwrap();
+        assert_eq!(true, f_test_match);
+        #[cfg(feature = "cache")]
+        {
+            viperus::cache(true);
+            let f_test_match = viperus::get::<bool>("match").unwrap();
+            assert_eq!(true, f_test_match);
+            let f_test_match = viperus::get::<bool>("match").unwrap();
+            assert_eq!(true, f_test_match);
+        }
+ 
+
+    }
