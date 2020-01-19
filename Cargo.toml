@@ -1,6 +1,6 @@
 [package]
 name = "viperus"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["mauro cordioli <coma@cordioli.it>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"

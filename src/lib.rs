@@ -3,14 +3,14 @@
 //! I have already said that it is incomplete?
 //! use at your own risk. ;-)
 //! viperus handle some types of configuration needs and formats.
-//!
-//! It supports:
-//! * setting defaults
-//! * reading from JSON, TOML, YAML, envfile config files
+//!* setting defaults
+//! * reading from JSON, TOML, YAML, dotenv file ,java properties config files
 //! * reading from environment variables
 //! * reading from Clap command line flags
 //! * setting explicit values
-//!
+//! * reload of all files
+//! * whatch config files and reolad all in something changes
+//! * caching
 //! Viperus uses the following decreasing precedence order.
 //! * explicit call to `add`
 //! * clap flag
