@@ -127,7 +127,6 @@ pub fn reload() -> Result<(), Box<dyn Error>> {
 
 /// cache the query results for small configs speedup is x4
 ///from v 0.1.9 returns the previus state , useful for test setups.
-  
 #[cfg(feature = "cache")]
 pub fn cache(enable: bool) -> bool {
     VIPERUS.lock().unwrap().cache(enable)
@@ -140,11 +139,7 @@ pub fn automatic_env(enable: bool) {
     VIPERUS.lock().unwrap().automatic_env(enable)
 }
 
-
- /// prepend 'pefix' when quering envirment variables
- pub fn set_env_prefix( prefix :&str) {
+/// prepend 'pefix' when quering envirment variables
+pub fn set_env_prefix(prefix: &str) {
     VIPERUS.lock().unwrap().set_env_prefix(prefix)
- }
-
-
-
+}

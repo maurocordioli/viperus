@@ -2,9 +2,9 @@ use super::*;
 use toml;
 
 /// TomlAdapter map a Toml file in a linear multilevel key/value array
-/// 
+///
 /// the adaptor could be consumed by Viperous
-/// internally it uses toml crate 
+/// internally it uses toml crate
 pub struct TomlAdapter {
     source: String,
     data: toml::map::Map<String, toml::Value>,
@@ -21,14 +21,14 @@ impl TomlAdapter {
     }
 
     pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        self.source = std::fs::read_to_string(name)?;
-
-        Ok(())
+        let mut f = std::fs::File::open(name)?;
+        self.load(&mut f)
     }
 
-    pub fn load_str(&mut self, source: &str) -> AdapterResult<()> {
-        self.source = source.to_owned();
+    pub fn load<R: std::io::Read>(&mut self, source: &mut R) -> AdapterResult<()> {
+        self.source.truncate(0);
 
+        source.read_to_string(&mut self.source)?;
         Ok(())
     }
 }

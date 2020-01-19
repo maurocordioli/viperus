@@ -75,13 +75,13 @@ fn test_main() {
     let mut v = viperus::Viperus::new();
     #[cfg(feature = "fmt-env")]
     v.load_file(".env", viperus::Format::ENV).unwrap();
-    #[cfg(feature = "fmt-clap")]{
-    v.load_clap(matches).expect("strange...");
-    v.bond_clap("v", "verbose");
-    v.bond_clap("argdefault", "argdefault");
+    #[cfg(feature = "fmt-clap")]
+    {
+        v.load_clap(matches).expect("strange...");
+        v.bond_clap("v", "verbose");
+        v.bond_clap("argdefault", "argdefault");
     }
     v.add("verbose", true);
-
 
     let f_verbose = v.get::<bool>("verbose").unwrap();
     debug!("verbose {:?}", f_verbose);
@@ -103,8 +103,9 @@ fn test_main() {
         v.cache(false);
     }
 
-    #[cfg(feature = "fmt-clap")]{
-    let f_argdefault = v.get::<String>("argdefault").unwrap();
-    assert_eq!("none", f_argdefault);
+    #[cfg(feature = "fmt-clap")]
+    {
+        let f_argdefault = v.get::<String>("argdefault").unwrap();
+        assert_eq!("none", f_argdefault);
     }
 }

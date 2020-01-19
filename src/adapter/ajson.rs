@@ -1,9 +1,8 @@
-
 use super::*;
 
 /// JsonAdapter map a Json file in a linear multilevel key/value array
-/// 
-/// the adaptor could be consumed by Viperous 
+///
+/// the adaptor could be consumed by Viperous
 /// internally use serde_json crate
 pub struct JsonAdapter {
     source: String,
@@ -21,14 +20,14 @@ impl JsonAdapter {
     }
 
     pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        self.source = std::fs::read_to_string(name)?;
-
-        Ok(())
+        let mut f = std::fs::File::open(name)?;
+        self.load(&mut f)
     }
 
-    pub fn load_str(&mut self, source: &str) -> AdapterResult<()> {
-        self.source = source.to_owned();
+    pub fn load<R: std::io::Read>(&mut self, source: &mut R) -> AdapterResult<()> {
+        self.source.truncate(0);
 
+        source.read_to_string(&mut self.source)?;
         Ok(())
     }
 }
@@ -46,7 +45,7 @@ impl ConfigAdapter for JsonAdapter {
         //let mut kpath;
 
         for (k, v) in self.data.iter() {
-            let  kpath = k.to_owned();
+            let kpath = k.to_owned();
 
             rec_json(&mut res, &kpath, v);
         }

@@ -8,14 +8,15 @@ use at your own risk. ;-)
 no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
 
 ## Recent Changes
-* 0.1.9 optional automatic prefixed environment  variable mapping,basic error propagation, cleaned dependency
-* 0.1.8 add cache feature, modular "featurization"
-* 0.1.5 add watch_all files with autoreload
-* 0.1.4 add format : java properties files
-* 0.1.3 better clap args : default values
-* 0.1.2 relaod config from files
-* 0.1.1 fixes dcs
-* 0.1.0 first release
+* 0.1.10 adapters load cfg data from std:io::Read
+* 0.1.9  optional automatic prefixed environment  variable mapping,basic error propagation, cleaned dependency
+* 0.1.8  add cache feature, modular "featurization"
+* 0.1.5  add watch_all files with autoreload
+* 0.1.4  add format : java properties files
+* 0.1.3  better clap args : default values
+* 0.1.2  relaod config from files
+* 0.1.1  fixes dcs
+* 0.1.0  first release
 
 ## What is Viperus?
 a package that handles  some types of configuration  modes with differente formats,cli params and environment  . 

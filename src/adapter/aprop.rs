@@ -1,9 +1,6 @@
 use super::*;
 
-
 use java_properties::PropertiesIter;
-
-use std::fs::File;
 
 use std::io::BufReader;
 
@@ -23,10 +20,12 @@ impl JavaPropertiesAdapter {
     }
 
     pub fn load_file(&mut self, name: &str) -> AdapterResult<()> {
-        // Reading advanced
-        let   f = File::open(name)?;
-      
-        PropertiesIter::new(BufReader::new(f)).read_into(|k, v| {
+        let mut f = std::fs::File::open(name)?;
+        self.load(&mut f)
+    }
+
+    pub fn load<R: std::io::Read>(&mut self, source: &mut R) -> AdapterResult<()> {
+        PropertiesIter::new(BufReader::new(source)).read_into(|k, v| {
             self.data.insert(k, v);
         })?;
         Ok(())
@@ -34,7 +33,6 @@ impl JavaPropertiesAdapter {
 }
 impl ConfigAdapter for JavaPropertiesAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
-        
         Ok(())
     }
 
@@ -47,4 +45,4 @@ impl ConfigAdapter for JavaPropertiesAdapter {
 
         res
     }
-} 
+}

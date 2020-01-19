@@ -29,7 +29,6 @@ extern crate serde;
 extern crate serde_yaml;
 #[macro_use]
 extern crate log;
- 
 
 mod adapter;
 mod map;
@@ -48,7 +47,6 @@ use std::error::Error;
 use std::fmt::Display;
 
 use std::str::FromStr;
-
 
 #[cfg(feature = "global")]
 mod global;
@@ -147,7 +145,6 @@ impl<'v> Viperus<'v> {
             cache_map: RefCell::new(map::Map::new()),
             #[cfg(feature = "cache")]
             cache_use: false,
-            
             enable_automatic_env: false,
             env_prefix: String::default(),
         }
@@ -244,7 +241,6 @@ impl<'v> Viperus<'v> {
             Format::ENV => {
                 let mut adt = adapter::EnvAdapter::new();
                 adt.load_file(name)?;
-
                 self.loaded_files
                     .push_back((adt.get_real_path().to_str().unwrap().to_owned(), format));
                 self.load_adapter(&mut adt)
@@ -253,7 +249,7 @@ impl<'v> Viperus<'v> {
             #[cfg(feature = "fmt-javaproperties")]
             Format::JAVAPROPERTIES => {
                 let mut adt = adapter::JavaPropertiesAdapter::new();
-                adt.load_file(name).unwrap();
+                adt.load_file(name)?;
                 self.load_adapter(&mut adt)
             }
 
@@ -439,7 +435,7 @@ impl<'v> Viperus<'v> {
     ///from v 0.1.9 returns the previus state , useful for test setups.
     #[cfg(feature = "cache")]
     pub fn cache(&mut self, enable: bool) -> bool {
-        let result=self.cache_use;
+        let result = self.cache_use;
         self.cache_use = enable;
 
         if self.cache_use {

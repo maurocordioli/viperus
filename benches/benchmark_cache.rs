@@ -2,11 +2,10 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use viperus::*;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    #[cfg(all(feature = "fmt-yaml",feature="global"))]
+    #[cfg(all(feature = "fmt-yaml", feature = "global"))]
     viperus::load_file(&path!(".", "assets", "cache.yaml"), Format::YAML).unwrap();
-    #[cfg(all(feature = "fmt-env",feature="global"))]
+    #[cfg(all(feature = "fmt-env", feature = "global"))]
     viperus::load_file(&path!(".", "assets", "cache.env"), Format::ENV).unwrap();
-    
     #[cfg(feature = "global")]
     viperus::add("level1.key_add", true);
 

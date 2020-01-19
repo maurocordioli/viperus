@@ -1,29 +1,26 @@
-
-
 pub type AdapterResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+#[cfg(feature = "fmt-env")]
+mod aenv;
+#[cfg(feature = "fmt-json")]
+mod ajson;
+#[cfg(feature = "fmt-javaproperties")]
+mod aprop;
+#[cfg(feature = "fmt-toml")]
+mod atoml;
 #[cfg(feature = "fmt-yaml")]
 mod ayaml;
-#[cfg(feature = "fmt-json")] 
-mod ajson;
-#[cfg(feature = "fmt-toml")] 
-mod atoml;
-#[cfg(feature = "fmt-env")] 
-mod aenv;
-#[cfg(feature = "fmt-javaproperties")] 
-mod aprop;
 
-
-#[cfg(feature = "fmt-yaml")] 
-pub use ayaml::*;
-#[cfg(feature = "fmt-json")] 
+#[cfg(feature = "fmt-env")]
+pub use aenv::*;
+#[cfg(feature = "fmt-json")]
 pub use ajson::*;
-#[cfg(feature = "fmt-toml")] 
+#[cfg(feature = "fmt-javaproperties")]
+pub use aprop::*;
+#[cfg(feature = "fmt-toml")]
 pub use atoml::*;
-#[cfg(feature = "fmt-env")] 
- pub use aenv::*;
- #[cfg(feature = "fmt-javaproperties")]
- pub use aprop::*;
+#[cfg(feature = "fmt-yaml")]
+pub use ayaml::*;
 
 /// ConfigAdapter mediates from varius config format and Viperus
 pub trait ConfigAdapter {
@@ -33,11 +30,9 @@ pub trait ConfigAdapter {
     fn get_map(&self) -> crate::map::Map;
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-   
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -49,7 +44,7 @@ mod tests {
         init();
 
         let mut a = JsonAdapter::new();
-        a.load_str("{ \"json\": true }").unwrap();
+        a.load(&mut "{ \"json\": true }".as_bytes()).unwrap();
         a.parse().unwrap();
 
         let map = a.get_map();
@@ -57,14 +52,13 @@ mod tests {
         assert_eq!(jtrue, true);
     }
 
-
     #[test]
     #[cfg(feature = "fmt-yaml")]
     fn adapter_yaml_load() {
         init();
 
         let mut a = YamlAdapter::new();
-        a.load_str("yaml: true\n").unwrap();
+        a.load(&mut "yaml: true\n".as_bytes()).unwrap();
         a.parse().unwrap();
 
         let map = a.get_map();
@@ -78,7 +72,8 @@ mod tests {
         init();
 
         let mut a = TomlAdapter::new();
-        a.load_str("[level1]\nkey1=true\nkeyi32=42\nkey=\"hello world!\"\n").unwrap();
+        a.load(&mut "[level1]\nkey1=true\nkeyi32=42\nkey=\"hello world!\"\n".as_bytes())
+            .unwrap();
         a.parse().unwrap();
 
         let map = a.get_map();
@@ -88,10 +83,7 @@ mod tests {
         let ji32 = map.get::<i32>("level1.keyi32").unwrap();
         assert_eq!(ji32, 42);
 
-
         let jstr = map.get::<String>("level1.key").unwrap();
         assert_eq!(jstr, "hello world!");
-        
-        
     }
 }

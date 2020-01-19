@@ -17,7 +17,7 @@ fn test_global() {
     init();
 
     #[cfg(feature = "cache")]
-    let old=viperus::cache(false);
+    let old = viperus::cache(false);
 
     #[cfg(feature = "fmt-env")]
     {
@@ -33,7 +33,6 @@ fn test_global() {
 
     #[cfg(feature = "cache")]
     viperus::cache(old);
-
 
     assert_ne!(viperus::get::<bool>("default").unwrap(), true);
 }
@@ -168,21 +167,17 @@ fn test_std_env() {
     init();
     info!("test adapter creation");
 
- 
-        std::env::set_var("TEST_MATCH", "true");
-        viperus::automatic_env(true);
-        viperus::set_env_prefix("TEST_");
+    std::env::set_var("TEST_MATCH", "true");
+    viperus::automatic_env(true);
+    viperus::set_env_prefix("TEST_");
 
+    let f_test_match = viperus::get::<bool>("match").unwrap();
+    assert_eq!(true, f_test_match);
+    #[cfg(feature = "cache")]
+    {
+        viperus::cache(true);
         let f_test_match = viperus::get::<bool>("match").unwrap();
         assert_eq!(true, f_test_match);
-        #[cfg(feature = "cache")]
-        {
-            viperus::cache(true);
-            let f_test_match = viperus::get::<bool>("match").unwrap();
-            assert_eq!(true, f_test_match);
-            let f_test_match = viperus::get::<bool>("match").unwrap();
-            assert_eq!(true, f_test_match);
-        }
- 
-
-    }
+        let f_test_match = viperus::get::<bool>("match").unwrap();
+        assert_eq!(true, f_test_match);
+    }}
