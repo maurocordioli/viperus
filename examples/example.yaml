@@ -1,2 +1,4 @@
+config:
+  file: example/example.yaml
 service:
-  url: htts://example.og/api/v1
+  url: https://example.org/api/v1
