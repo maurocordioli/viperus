@@ -20,7 +20,7 @@ impl Into<bool> for &ViperusValue {
         match self {
         ViperusValue::BOOL(i) => *i,
         ViperusValue::Str(s) => s.parse().expect("not a bool"),
-        _=> panic!("not a bool")
+            _ => panic!("not a bool"),
         }
     }
 }
@@ -31,10 +31,9 @@ impl Into<bool> for ViperusValue {
         ViperusValue::BOOL(i) => i,
         ViperusValue::Str(s) => s.parse().expect("not a bool"),
 
-        _ =>  panic!("not a bool {:?}",self),
-        
+            _ => panic!("not a bool {:?}", self),
+        }
     }
-}
 }
 
 impl From<bool> for ViperusValue {
@@ -92,7 +91,7 @@ impl<'a> Into<&'a str> for &'a ViperusValue {
     fn into(self) -> &'a str {
         match self { 
         ViperusValue::Str(i) => i,
-        _ => panic!("not an str")
+            _ => panic!("not an str"),
         }
     }
 }
@@ -101,9 +100,8 @@ impl<'a> Into<String> for &'a ViperusValue {
     fn into(self) -> String {
         match self {
         ViperusValue::Str(i) => i.clone(),
-            _ => panic!("not an str")
+            _ => panic!("not an str"),
         }
-    
     }
 }
 
@@ -111,7 +109,7 @@ impl Into<String> for ViperusValue {
     fn into(self) -> String {
         match self  {
         ViperusValue::Str(i) => i,
-        _=> panic!("not a string")
+            _ => panic!("not a string"),
         }
     }
 }
@@ -172,7 +170,7 @@ mod tests {
         let refmv = ViperusValue::from(&("hello world!".to_owned()));
         match refmv {
         ViperusValue::Str(s) => assert_eq!(s, "hello world!"),
-        _ => panic!("something very wrong")
+            _ => panic!("something very wrong"),
         }
     }
 

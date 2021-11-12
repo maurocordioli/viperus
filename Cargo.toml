@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/maurocordioli/viperus"
 description="Viperus is an  (in)complete configuration solution for rust applications heavly inspired by the GO package Viper.It supports defaults reading from JSON, TOML, YAML, envfile,java properties, environment variables reading from Clap command line flags setting explicit values"
 exclude = ["tarpaulin-report.html"]
-keywords= ["config","yaml","toml","json","dotenv"]
+keywords= ["config", "yaml", "toml", "json", "dotenv"]
 readme="README.md"
 
 [badges]
@@ -68,18 +68,22 @@ name = "benchmark_cache"
 harness = false
 
 [features]
-# no features by default
-default = [ "global","cache","watch","notify","fmt-yaml","fmt-json","fmt-env","fmt-toml","fmt-javaproperties","fmt-clap"]
+# enable all features as default
+default = ["cache", "global", "fmt-clap", "fmt-env", "fmt-javaproperties", "fmt-json", "fmt-toml", "fmt-yaml", "notify", "watch"]
 
-# static global config
+# const static config
 global = ["lazy_static"]
+
 # cache queries
 cache =[]
-# watch
-watch=["global","notify"]
-fmt-yaml=["serde","serde_yaml"]
-fmt-json=["serde","serde_json"]
+
+# triggers parameter changes in config files
+watch=["global", "notify"]
+
+# supported format parsers
+fmt-clap=["clap"]
 fmt-env=["dotenv"]
 fmt-javaproperties=["java-properties"]
-fmt-clap=["clap"]
+fmt-json=["serde","serde_json"]
 fmt-toml=[ "toml"]
+fmt-yaml=["serde","serde_yaml"]

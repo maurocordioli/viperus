@@ -3,6 +3,7 @@ extern crate log;
 #[cfg(feature = "clap")]
 extern crate clap;
 extern crate viperus;
+
 #[cfg(feature = "clap")]
 use clap::{App, Arg, SubCommand};
 
@@ -10,7 +11,7 @@ fn init() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
 /// here there is an error
-/// this integration tests could be run in parallel.... so the caching state is unknown
+/// this integration tests could be run in parallel ... so the caching state is unknown
 #[test]
 #[cfg(feature = "global")]
 fn test_global() {
@@ -180,4 +181,5 @@ fn test_std_env() {
         assert_eq!(true, f_test_match);
         let f_test_match = viperus::get::<bool>("match").unwrap();
         assert_eq!(true, f_test_match);
-    }}
+    }
+}

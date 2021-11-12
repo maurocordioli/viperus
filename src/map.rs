@@ -1,7 +1,6 @@
 use std::collections::hash_map::Drain;
 use std::collections::HashMap;
 
-
 mod map_value;
 pub use map_value::ViperusValue;
 
@@ -10,8 +9,11 @@ pub struct Map {
     data: HashMap<String, ViperusValue>,
 }
 
-
-impl Default for Map { fn default() -> Self {Map::new()  } }   
+impl Default for Map {
+    fn default() -> Self {
+        Map::new()
+    }
+}
 
 impl Map {
     pub fn new() -> Self {
@@ -20,10 +22,7 @@ impl Map {
         }
     }
 
-
-    pub fn drain<'a>(&'a mut self) -> Drain<'a,String,ViperusValue>
-     
-    {
+    pub fn drain<'a>(&'a mut self) -> Drain<'a, String, ViperusValue> {
       self.data.drain()
     }
 
@@ -58,12 +57,11 @@ impl Map {
         self.data.get(key)
     }
 
-    pub fn get<'a,'b,'c, T>(&'a self, key: &'a str) -> Option<T>
+    pub fn get<'a, 'b, 'c, T>(&'a self, key: &'a str) -> Option<T>
     where
         ViperusValue: From<T>,
         &'c ViperusValue: Into<T>,
         ViperusValue: Into<T>,
-         
     {
         match self.data.get(key) {
             None => None,
@@ -71,20 +69,11 @@ impl Map {
         }
     }
 
-     
-
-
     pub fn merge(&mut self, src: &Map)  {
-         
-        for (k,v) in &src.data {
-
+        for (k, v) in &src.data {
             self.add_value(k, v.clone());
-
         }
-
     }
-
-
 }
 
 #[cfg(test)]
@@ -118,12 +107,8 @@ mod tests {
         let v1_i32 = m.get::<i32>("test.value_i32").unwrap();
         assert_eq!(314, v1_i32);
 
-         
         let v1_str = m.get::<String>("test.value2").unwrap();
         assert_eq!("none", v1_str);
-
-        
-        
     }
     #[test]
     #[should_panic]
@@ -132,6 +117,5 @@ mod tests {
         m.add_value("test.value2", ViperusValue::from("none"));
 
         assert!(m.get::<i32>("test.value2").is_none())
-     
     }
 }

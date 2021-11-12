@@ -15,7 +15,7 @@ use std::sync::Mutex;
 #[cfg(feature = "global")]
 lazy_static! {
     /// the global instance
-    static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = { Arc::new(Mutex::new(Viperus::new())) };
+    static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = Arc::new(Mutex::new(Viperus::new()));
 }
 
 /// Watch the config files and autoreload in case of change

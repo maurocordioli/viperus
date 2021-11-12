@@ -1,124 +1,178 @@
 # viperus  [![Build Status](https://travis-ci.com/maurocordioli/viperus.svg?branch=master)](https://travis-ci.com/maurocordioli/viperus) [![Coverage Status](https://coveralls.io/repos/github/maurocordioli/viperus/badge.svg?branch=master)](https://coveralls.io/github/maurocordioli/viperus?branch=master)
- ̶g̶o̶  rust configuration with fangs!
- 
-viperus is an (in)complete configuration solution for Rust applications. 
-inspired  heavly inspired by the wonderful go package <https://github.com/spf13/viper>
-use at your own risk. ;-)
-## 
-no Go projects h̶a̶s̶ ̶b̶e̶e̶n̶ ̶h̶a̶r̶m̶e̶d̶ are built using Viperus :-)
+ ~~go~~  rust configuration with fangs!
+
+`viperus` is an (in)complete commandline configuration solution for Rust applications.
+It is heavly inspired by the wonderful go package <https://github.com/spf13/viper>
+Use it at your own risk. ;-)
+
+no Go projects ~~has been harmed~~ are built consuming `viperus` :-)
 
 ## Recent Changes
 * 0.1.10 adapters load cfg data from std:io::Read
-* 0.1.9  optional automatic prefixed environment  variable mapping,basic error propagation, cleaned dependency
-* 0.1.8  add cache feature, modular "featurization"
+* 0.1.9  optional automatic prefixed environment  variable mapping, basic error propagation, cleaned dependency
+* 0.1.8  add cache feature, modular cargo  "feature" syntax
 * 0.1.5  add watch_all files with autoreload
-* 0.1.4  add format : java properties files
-* 0.1.3  better clap args : default values
+* 0.1.4  add format: java properties files
+* 0.1.3  better clap args: default values
 * 0.1.2  relaod config from files
 * 0.1.1  fixes dcs
 * 0.1.0  first release
 
-## What is Viperus?
-a package that handles  some types of configuration  modes with differente formats,cli params and environment  . 
-It supports:
+## What is viperus?
+Viperus is a package, that enables program configuration via an extendable
+types system. Parameters can be incoprorated via cli parameters, environment
+viariables. Parameters may be declared in configuration files as well.
+
+Given implementation can handle:
 
 * setting defaults
-* reading from JSON, TOML, YAML, dotenv file ,java properties config files
+* reading from config files. Given formats are parsed:
+  Dotenv, java-properties, JSON, TOML, YAML
 * reading from environment variables
 * reading from Clap command line flags
 * setting explicit values
 * reload of all files
-* whatch config files and reolad all in something changes
+* watch config files and reload, if any source value changes in first place
 * caching
 
-## Why Viperus?
+## Why viperus?
 
-beacuse I was migrating some go apps... and a was missing Viper ease of use :-)
+beacuse I was migrating some go apps ... and there was missing a rust tool that supplies `Viper` ease of use :-)
 
-Viperus uses the following decreasing precedence order.
+When config parameters are applied, Viperus uses the following decreasing precedence order:
 
- * explicit call to `add`
- * clap flag
- * config
- * environment  variables
- * default
+ * explicit calls to `add`
+ * clap flags values
+ * config file parameters
+ * environment variables
+ * default parameters
 
-Viperus merge configuration from toml,dotenv,json,yaml files and clap options in sigle typed hash structure.
-with defaults, and type checking
+`viperus` merges configuration parameters from
 
-you can create a stand alone Viperus object or "enjoy" a global instance ( thread safe protected with a mutex)
-via shadow functions load_file|get|add|load_clap that are routed to the static instance.  
+ * clap optoins
+ * dotenv
+ * json files
+ * toml files
+ * yaml files
+
+in a single typed hash structure. The structure can be preset with default. Values are type checked.
+
+You can create a standalone `viperus` object or "enjoy" a global
+instance. The global instance is guarded with a Mutex to garantee
+thread safty.
+
+Structure elements of a static instance may be manipulated via the shadow functions
+
+ * add
+ * get
+ * load_clap
+ * load_file
 
 ```rust
-//add a dotenv config file , keys defautls di env variables
+// add a dotenv config file. keys defautls to the env variables
 viperus::load_file(".env", viperus::Format::ENV).unwrap();
-//add another file
+
+// add another file
 viperus::load_file("user.env", viperus::Format::ENV).unwrap();
 
- 
-//automatically map env variable staring with "TEST_" to config keys
+// automatically map env variable staring with "TEST_" to config keys
 viperus::set_env_prefix("TEST_");
 viperus::automatic_env(true);
 
-//watch the config and autoreload if something changes
+// watch config parameters and autoreload changed values
 viperus::watch_all();
-   
-//enable caching  -- file reload invalidates cache
-// cache i thread safe for the global "static" instance
+
+// enable caching -- file reload invalidates cache
+// the cache is thread safe for the global "static" instance
 viperus::cache(true);
 let ok=viperus::get::<bool>("TEST_BOOL").unwrap();
 ```
-by the way , Yes I konw globals are evil. but as I was inspired by the  go package viper....
-if you dislike globals you can opt-out disabling in your cargo.toml the feature "global".
-   
-## caching
-you can enable caching for a x4 speed-up. 
-cache is thread safe only when used with the global instance taht is behing a arc mutex
-```rust
-     viperus::cache(true);
+
+** Sidenote:  Yes I konw globals are evil. Inspiration was taken form the go package `viper` that is taking this route ....
+If you dislike globals, or other preset defaults, go ahead and opt-out like this:
+
+```cargo
+cargo build --release --no-default-features --features "cache, fmt-clap, fmt-env, fmt-javaproperties, fmt-yaml, fmt-toml, notify, watch"
 ```
-reloading files with an excplicit ``` viperus::reload() ``` , 
-or for effect of a file change when file watch is active invalidates the cache.
+
+## caching
+Enable caching and you will gain a x4 speed-up.
+Cache is only thread safe if you use a global instance that is guarded with an arc mutex.
+
+```rust
+	viperus::cache(true);
+```
+
+The caching is invalidated, if you
+ * reload any file with an excplicit ``` viperus::reload() ```
+ * parameter changes inside a file, that is observed with the  `watch` feature
 
 ## logging/debug
-the crate uses `log` facade , and test the `env_logger` you can set the env variable to RUST_LOG=viperus=[DEBUG LEVEL] with
-[DEBUG LEVEL] = info|warning|debug  or RUST_LOG=[DEBUG LEVEL]
-## features
-the crate in "featurized" with the features enabled by default 
-*  feature = "fmt-[format]" with [format] in 'json,end,toml,yaml,javaproperties,clap' enabling the relative format
-*  feature ="global" enabling the global tread safe configuration
-*  feature ="watch" enabling the automatic file reload wirh prerequisite feature=global
-*  feature ="cache" aneglig caching 
 
-single featues could be activated in a selective way  via cargo.toml 
+The crate uses `log` facade. Testing is supported via the `env_logger` crate.
+you can set the env variable to RUST_LOG=viperus=[DEBUG LEVEL] with
+
+[DEBUG LEVEL] = info|warning|debug  or RUST_LOG=[DEBUG LEVEL]
+
+## features
+The crate may be adopted using cargo's "feature" semantic. The default enables all supported features:
+
+*  feature = "fmt-[format]" with [format] in 'clap, env, javaproperties, json, toml, yaml' enabling the relative format
+*  feature = "global" enabling the global tread safe configuration
+*  feature = "watch" enabling the automatic file reload ( prerequisite: feature=global)
+*  feature = "cache" enabling caching
+
+single featues could be activated in a selective way  via cargo.toml
 
 ```toml
 [dependencies.viperus]
 version = "0.1.8"
+
 # do not include the default features, and optionally
-default-features = false 
+default-features = false
+
 # cherry-pick individual features
 features = ["global", "cache","watch","fmt-yaml"]
 ```
-## Examples
-you can find some integration tests in the test dir and also in the example folder
-you can run example with cargo:
-```
-cargo run --example cli-clap-yaml -- 
-cargo run --example cli-clap-yaml -- -u http://nowhere/api/v1
-```
-the first run print the value from the example.yaml file 
-the second from the cli arg
 
+## Tests
+All available integration tests are put into the subdirectory `tests`.
+Reading the source code may help to get into the inner logic.
+
+```
+cargo test
+```
+
+## Examples
+
+Inside the example subdirectory there is a reference implementation that consumes a yaml configuration file.
+
+Compile and execute it like this:
+
+```
+cargo run --example cli-clap-yaml --
+```
+
+Since the `cli-clap-yaml` call does **not** define any commandline
+arguments, the revealed parameters inside the config file will be parsed out.
+
+In a second run, we call this example providing commandline parameters:
+
+```
+cargo run --example cli-clap-yaml -- -c ./example.conf -u http://nowhere/api/v1
+```
+
+Since the `cli-clap-yaml` does call **with** commandline
+arguments, the revealed parameters inside the config file are overwritten.
 
 ```rust
 
 let matches = App::new("My Super Program")
-                 .arg(Arg::with_name("v")
-                 .short("v")
-                 .multiple(true)
-                 .help("Sets the level of verbosity"))
-                 .get_matches();   
+				 .arg(Arg::with_name("v")
+				 .short("v")
+				 .multiple(true)
+				 .help("Sets the level of verbosity"))
+				 .get_matches();
 let mut v = Viperus::new();
 
 //enable clap
@@ -132,7 +186,7 @@ v.load_file(&path!(".","assets","test.properties"), Format::JAVAPROPERTIES).unwr
 v.bond_clap("v","verbose");
 
 
-//add an explicit overload 
+//add an explicit overload
 v.add("service.url", String::from("http://example.com"));
 debug!("final {:?}", v);
 
@@ -143,13 +197,11 @@ assert_eq!("http://example.com", s);
 //get a bool from configs or app args
 let fVerbose=v.get::<bool>("verbose").unwrap();
 assert_eq!(true, fVerbose);
-  
 ```
+
 ## Todo
-* remote configs
-* better error propagation
-* stabilize api
-* improve documentation and examples
-* improve my rust karma
-
-
+[ ] remote configs
+[ ] better error propagation
+[ ] stabilize api
+[ ] improve documentation and examples
+[ ] improve my rust karma
