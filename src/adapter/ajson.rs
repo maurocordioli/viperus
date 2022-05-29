@@ -1,4 +1,5 @@
 use super::*;
+use log::debug;
 
 /// JsonAdapter map a Json file in a linear multilevel key/value array
 ///

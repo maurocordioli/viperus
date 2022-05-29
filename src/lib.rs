@@ -3,13 +3,13 @@
 //! I have already said that it is incomplete?
 //! use at your own risk. ;-)
 //! viperus handle some types of configuration needs and formats.
-//!* setting defaults
+//! * setting defaults
 //! * reading from JSON, TOML, YAML, dotenv file ,java properties config files
 //! * reading from environment variables
 //! * reading from Clap command line flags
 //! * setting explicit values
 //! * reload of all files
-//! * whatch config files and reolad all in something changes
+//! * watch config files and reload all in something changes
 //! * caching
 //! Viperus uses the following decreasing precedence order.
 //! * explicit call to `add`
@@ -19,16 +19,6 @@
 //! * default
 //!
 #![warn(clippy::all)]
-#[macro_use]
-#[cfg(feature = "global")]
-extern crate lazy_static;
-
-#[cfg(any(feature = "fmt-yaml", feature = "fmt-toml"))]
-extern crate serde;
-#[cfg(feature = "ftm-yaml")]
-extern crate serde_yaml;
-#[macro_use]
-extern crate log;
 
 mod adapter;
 mod map;
@@ -46,6 +36,7 @@ pub use map::ViperusValue;
 use std::error::Error;
 use std::fmt::Display;
 
+use log::debug;
 use std::str::FromStr;
 
 #[cfg(feature = "global")]
@@ -60,9 +51,7 @@ pub enum ViperusError {
 }
 impl Error for ViperusError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match &self {
-            _ => None,
-        }
+        None
     }
 }
 impl Display for ViperusError {
@@ -79,7 +68,7 @@ macro_rules! path {
     ( $ x: expr, $($y:expr),+) =>  (format!("{}{}{}",$x,std::path::MAIN_SEPARATOR,path!($($y),+)))
 }
 
-///preconfigured file formats with stock adapters
+/// preconfigured file formats with stock adapters
 #[derive(Debug, Clone, Copy)]
 pub enum Format {
     Auto,
@@ -100,9 +89,9 @@ pub enum Format {
 /// Viperous manage config source from files, env and command line parameters in a unified manner
 #[derive(Debug)]
 pub struct Viperus<'a> {
-    default_map: map::Map,
-    config_map: map::Map,
-    override_map: map::Map,
+    default_map: Map,
+    config_map: Map,
+    override_map: Map,
 
     #[cfg(feature = "fmt-clap")]
     clap_matches: clap::ArgMatches<'a>,
@@ -113,7 +102,7 @@ pub struct Viperus<'a> {
     clap_bonds: std::collections::HashMap<String, String>,
     loaded_files: std::collections::LinkedList<(String, Format)>,
     #[cfg(feature = "cache")]
-    cache_map: RefCell<map::Map>,
+    cache_map: RefCell<Map>,
     #[cfg(feature = "cache")]
     cache_use: bool,
 
@@ -131,9 +120,9 @@ impl<'v> Default for Viperus<'v> {
 impl<'v> Viperus<'v> {
     pub fn new() -> Self {
         Viperus {
-            default_map: map::Map::new(),
-            config_map: map::Map::new(),
-            override_map: map::Map::new(),
+            default_map: Map::new(),
+            config_map: Map::new(),
+            override_map: Map::new(),
             #[cfg(feature = "fmt-clap")]
             clap_matches: clap::ArgMatches::default(),
             #[cfg(not(feature = "fmt-clap"))]
@@ -142,7 +131,7 @@ impl<'v> Viperus<'v> {
             clap_bonds: std::collections::HashMap::new(),
             loaded_files: std::collections::LinkedList::new(),
             #[cfg(feature = "cache")]
-            cache_map: RefCell::new(map::Map::new()),
+            cache_map: RefCell::new(Map::new()),
             #[cfg(feature = "cache")]
             cache_use: false,
             enable_automatic_env: false,
@@ -150,15 +139,15 @@ impl<'v> Viperus<'v> {
         }
     }
 
-    /// whan enabled viperus will check for an environment variable any time Get request is made
-    /// checking  for a environment variable with a name matching the key uppercased and prefixed with the
+    /// when enabled viperus will check for an environment variable any time Get request is made
+    /// checking  for a environment variable with a name matching the upper-cased key and prefixed with the
     /// env_prefix if set.
     /// this uses std:env if feature fmt-env is disabled
     pub fn automatic_env(&mut self, enable: bool) {
         self.enable_automatic_env = enable;
     }
 
-    /// prepend 'pefix' when quering environment  variables
+    /// prepend 'prefix' when querying environment variables
     pub fn set_env_prefix(&mut self, prefix: &str) {
         self.env_prefix = prefix.to_owned();
     }
@@ -193,7 +182,7 @@ impl<'v> Viperus<'v> {
             if std::path::Path::new(name).exists() {
                 debug!("reloading  {} => {:?}", name, format);
 
-                self.load_file(name, format.clone())?;
+                self.load_file(name, *format)?;
             } else {
                 debug!("not exists  {} => {:?}", name, format);
             }
@@ -205,8 +194,8 @@ impl<'v> Viperus<'v> {
         self.loaded_files.iter().map(|e| e.0.clone()).collect()
     }
 
-    ///load_file load a config file using one of the preconfigured addapters
-    ///then applay the adatpter using load_adapter method
+    /// load_file load a config file using one of the preconfigured adapters
+    /// then apply the adapter using load_adapter method
     pub fn load_file(&mut self, name: &str, format: Format) -> Result<(), Box<dyn Error>> {
         debug!("loading  {}", name);
 
@@ -259,25 +248,22 @@ impl<'v> Viperus<'v> {
         }
     }
 
-    /// load_adapter ask the adapter to parse her data and merges result map in the internal configartion map
-    pub fn load_adapter(
-        &mut self,
-        adt: &mut dyn adapter::ConfigAdapter,
-    ) -> Result<(), Box<dyn Error>> {
+    /// load_adapter ask the adapter to parse her data and merges result map in the internal configuration map
+    pub fn load_adapter(&mut self, adt: &mut dyn ConfigAdapter) -> Result<(), Box<dyn Error>> {
         adt.parse()?;
         self.config_map.merge(&adt.get_map());
         Ok(())
     }
 
     /// get a configuration value of type T in this order
-    /// * overrided key
+    /// * overridden key
     /// * clap parameters
     /// * config adapter sourced values
     pub fn get<'a, 'b, 'c, T>(&'a self, key: &'b str) -> Option<T>
     where
-        map::ViperusValue: From<T>,
-        &'c map::ViperusValue: Into<T>,
-        map::ViperusValue: Into<T>,
+        ViperusValue: From<T>,
+        &'c ViperusValue: Into<T>,
+        ViperusValue: Into<T>,
         T: FromStr,
         T: Clone,
     {
@@ -316,7 +302,7 @@ impl<'v> Viperus<'v> {
                     let res = self.clap_matches.value_of(dst);
 
                     if let Some(v) = res {
-                        let mv = &map::ViperusValue::Str(v.to_owned());
+                        let mv = &ViperusValue::Str(v.to_owned());
                         #[cfg(feature = "cache")]
                         {
                             if self.cache_use {
@@ -404,13 +390,13 @@ impl<'v> Viperus<'v> {
         def
     }
 
-    /// add an override value to the cofiguration
+    /// add an override value to the configuration
     ///
     /// key is structured in components separated by a "."
     pub fn add<'a, T>(&'a mut self, key: &'a str, value: T) -> Option<T>
     where
-        map::ViperusValue: From<T>,
-        map::ViperusValue: Into<T>,
+        ViperusValue: From<T>,
+        ViperusValue: Into<T>,
     {
         self.override_map.add(key, value)
     }
@@ -425,21 +411,21 @@ impl<'v> Viperus<'v> {
     /// key is structured in components separated by a "."
     pub fn add_default<'a, T>(&'a mut self, key: &'a str, value: T) -> Option<T>
     where
-        map::ViperusValue: From<T>,
-        map::ViperusValue: Into<T>,
+        ViperusValue: From<T>,
+        ViperusValue: Into<T>,
     {
         self.default_map.add(key, value)
     }
 
     /// cache the query results for small configs speedup is x4
-    ///from v 0.1.9 returns the previus state , useful for test setups.
+    ///from v 0.1.9 returns the previous state , useful for test setups.
     #[cfg(feature = "cache")]
     pub fn cache(&mut self, enable: bool) -> bool {
         let result = self.cache_use;
         self.cache_use = enable;
 
         if self.cache_use {
-            let cache_old = &mut map::Map::new();
+            let cache_old = &mut Map::new();
             std::mem::swap(cache_old, &mut self.cache_map.borrow_mut());
         }
 
@@ -563,3 +549,17 @@ mod tests {
         }
     }
 }
+
+// Ensure README.md contains valid code.
+// FIXME: Uncomment this block once all README.md bugs are fixed.
+// #[cfg(doctest)]
+// mod test_readme {
+//     macro_rules! external_doc_test {
+//         ($x:expr) => {
+//             #[doc = $x]
+//             extern "C" {}
+//         };
+//     }
+//
+//     external_doc_test!(include_str!("../README.md"));
+// }

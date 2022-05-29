@@ -1,6 +1,6 @@
 //! all the stuff that create a global instance of viperus
 //!
-//! the instance is "lazy_static" and proteced by a mutex
+//! the instance is "lazy_static" and protected by a mutex
 
 use super::*;
 use std::sync::mpsc::channel;
@@ -9,11 +9,12 @@ use std::sync::mpsc::channel;
 use notify::Watcher;
 use std::time::Duration;
 
+use log::{error, info};
 use std::sync::Arc;
 use std::sync::Mutex;
 
 #[cfg(feature = "global")]
-lazy_static! {
+lazy_static::lazy_static! {
     /// the global instance
     static ref VIPERUS: Arc::<Mutex::<Viperus<'static>>> = Arc::new(Mutex::new(Viperus::new()));
 }
@@ -65,56 +66,57 @@ pub fn load_file(name: &str, format: Format) -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().load_file(name, format)
 }
 
-/// load_adapter ask the adapter to parse her data and merges result map in the internal configurtion map of global instance
-pub fn load_adapter(adt: &mut dyn adapter::ConfigAdapter) -> Result<(), Box<dyn Error>> {
+/// load_adapter ask the adapter to parse her data and merges result
+/// map in the internal configuration map of global instance
+pub fn load_adapter(adt: &mut dyn ConfigAdapter) -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().load_adapter(adt)
 }
 
-/// add an override value to the cofiguration
+/// add an override value to the configuration
 ///
 /// key is structured in components separated by a "."
 pub fn add<T>(key: &str, value: T) -> Option<T>
 where
-    map::ViperusValue: From<T>,
-    map::ViperusValue: Into<T>,
+    ViperusValue: From<T>,
+    ViperusValue: Into<T>,
 {
     VIPERUS.lock().unwrap().add(key, value)
 }
 
 /// get a configuration value of type T from global configuration in this order
-/// * overrided key
+/// * overridden key
 /// * clap parameters
 /// * config adapter sourced values
 /// * default value
 pub fn get<'a, 'b, T>(key: &'a str) -> Option<T>
 where
-    map::ViperusValue: From<T>,
-    &'b map::ViperusValue: Into<T>,
-    map::ViperusValue: Into<T>,
+    ViperusValue: From<T>,
+    &'b ViperusValue: Into<T>,
+    ViperusValue: Into<T>,
     T: FromStr,
     T: Clone,
 {
     VIPERUS.lock().unwrap().get(key)
 }
 
-/// add an default value to the global cofiguration
+/// add an default value to the global configuration
 ///
 /// key is structured in components separated by a "."
 pub fn add_default<T>(key: &str, value: T) -> Option<T>
 where
-    map::ViperusValue: From<T>,
-    map::ViperusValue: Into<T>,
+    ViperusValue: From<T>,
+    ViperusValue: Into<T>,
 {
     VIPERUS.lock().unwrap().add_default(key, value)
 }
 
-///load_clap  brings in  the clap magic
+/// load_clap  brings in  the clap magic
 #[cfg(feature = "fmt-clap")]
 pub fn load_clap(matches: clap::ArgMatches<'static>) -> Result<(), Box<dyn Error>> {
     VIPERUS.lock().unwrap().load_clap(matches)
 }
 
-/// bond a clap argsument to a config key
+/// bond a clap argument to a config key
 #[cfg(feature = "fmt-clap")]
 pub fn bond_clap(src: &str, dst: &str) -> Option<String> {
     VIPERUS.lock().unwrap().bond_clap(src, dst)
@@ -126,20 +128,20 @@ pub fn reload() -> Result<(), Box<dyn Error>> {
 }
 
 /// cache the query results for small configs speedup is x4
-///from v 0.1.9 returns the previus state , useful for test setups.
+/// from v0.1.9 returns the previous state, useful for test setups.
 #[cfg(feature = "cache")]
 pub fn cache(enable: bool) -> bool {
     VIPERUS.lock().unwrap().cache(enable)
 }
 
-/// whan enabled viperus will check for an environment variable any time Get request is made
-/// checking  for a environment variable with a name matching the key uppercased and prefixed with the
+/// when enabled viperus will check for an environment variable any time Get request is made
+/// checking  for a environment variable with a name matching the upper-cased key and prefixed with the
 /// env_prefix if set.
 pub fn automatic_env(enable: bool) {
     VIPERUS.lock().unwrap().automatic_env(enable)
 }
 
-/// prepend 'pefix' when quering envirment variables
+/// prepend 'prefix' when querying environment variables
 pub fn set_env_prefix(prefix: &str) {
     VIPERUS.lock().unwrap().set_env_prefix(prefix)
 }

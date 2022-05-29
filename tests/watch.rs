@@ -1,10 +1,6 @@
-#[macro_use]
-extern crate log;
-extern crate tempfile;
-extern crate viperus;
-use std::io::Write;
-
+use log::debug;
 use std::fs::File;
+use std::io::Write;
 
 fn init() {
     let _ = env_logger::builder().is_test(true).try_init();

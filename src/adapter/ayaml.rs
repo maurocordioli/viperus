@@ -1,9 +1,9 @@
 use super::*;
-use serde_yaml;
+use log::debug;
 
 /// YamlAdapter map a Yaml file in a linear multilevel key/value array
 ///
-/// the adaptor could be consumed by Viperous  
+/// the adaptor could be consumed by Viperous
 pub struct YamlAdapter {
     source: String,
     data: serde_yaml::Mapping,
@@ -50,7 +50,7 @@ impl ConfigAdapter for YamlAdapter {
             if let serde_yaml::Value::String(s) = k {
                 let kpath = s.to_owned();
 
-                rec_yaml(&mut res, &kpath, &v);
+                rec_yaml(&mut res, &kpath, v);
             }
         }
 

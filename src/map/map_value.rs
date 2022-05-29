@@ -1,6 +1,6 @@
-///ViperusValue encaspule data values of type String,i32 and bool
+/// ViperusValue encapsulate data values of type String,i32 and bool
 ///
-///implements bidirectional conversion to respective  values via Into<T> and From<T>
+/// implements bidirectional conversion to respective  values via Into<T> and From<T>
 /// # Example
 /// ```
 /// use viperus::ViperusValue;
@@ -18,8 +18,8 @@ pub enum ViperusValue {
 impl Into<bool> for &ViperusValue {
     fn into(self) -> bool {
         match self {
-        ViperusValue::BOOL(i) => *i,
-        ViperusValue::Str(s) => s.parse().expect("not a bool"),
+            ViperusValue::BOOL(i) => *i,
+            ViperusValue::Str(s) => s.parse().expect("not a bool"),
             _ => panic!("not a bool"),
         }
     }
@@ -28,8 +28,8 @@ impl Into<bool> for &ViperusValue {
 impl Into<bool> for ViperusValue {
     fn into(self) -> bool {
         match self {
-        ViperusValue::BOOL(i) => i,
-        ViperusValue::Str(s) => s.parse().expect("not a bool"),
+            ViperusValue::BOOL(i) => i,
+            ViperusValue::Str(s) => s.parse().expect("not a bool"),
 
             _ => panic!("not a bool {:?}", self),
         }
@@ -62,7 +62,7 @@ impl Into<i32> for ViperusValue {
     fn into(self) -> i32 {
         match self {
             ViperusValue::I32(i) => i,
-           
+
             ViperusValue::Str(s) => s.parse().expect("not an i32"),
             _ => panic!("not an i32"),
         }
@@ -89,8 +89,8 @@ impl From<&str> for ViperusValue {
 
 impl<'a> Into<&'a str> for &'a ViperusValue {
     fn into(self) -> &'a str {
-        match self { 
-        ViperusValue::Str(i) => i,
+        match self {
+            ViperusValue::Str(i) => i,
             _ => panic!("not an str"),
         }
     }
@@ -99,7 +99,7 @@ impl<'a> Into<&'a str> for &'a ViperusValue {
 impl<'a> Into<String> for &'a ViperusValue {
     fn into(self) -> String {
         match self {
-        ViperusValue::Str(i) => i.clone(),
+            ViperusValue::Str(i) => i.clone(),
             _ => panic!("not an str"),
         }
     }
@@ -107,8 +107,8 @@ impl<'a> Into<String> for &'a ViperusValue {
 
 impl Into<String> for ViperusValue {
     fn into(self) -> String {
-        match self  {
-        ViperusValue::Str(i) => i,
+        match self {
+            ViperusValue::Str(i) => i,
             _ => panic!("not a string"),
         }
     }
@@ -163,13 +163,13 @@ mod tests {
 
         let mv = ViperusValue::from("hello world!");
         match mv {
-        ViperusValue::Str(s) =>  assert_eq!(s, "hello world!"),
-        _ => panic!("something very wrong"),
+            ViperusValue::Str(s) => assert_eq!(s, "hello world!"),
+            _ => panic!("something very wrong"),
         }
 
         let refmv = ViperusValue::from(&("hello world!".to_owned()));
         match refmv {
-        ViperusValue::Str(s) => assert_eq!(s, "hello world!"),
+            ViperusValue::Str(s) => assert_eq!(s, "hello world!"),
             _ => panic!("something very wrong"),
         }
     }
