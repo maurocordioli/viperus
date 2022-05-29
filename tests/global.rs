@@ -38,7 +38,7 @@ fn test_global() {
     assert_ne!(viperus::get::<bool>("default").unwrap(), true);
 }
 
-/// a mockup adapter for testonly
+/// a mockup adapter for test only
 struct ZeroAdapter {}
 impl viperus::ConfigAdapter for ZeroAdapter {
     fn parse(&mut self) -> viperus::AdapterResult<()> {

@@ -24,9 +24,9 @@ pub use ayaml::*;
 
 /// ConfigAdapter mediates from varius config format and Viperus
 pub trait ConfigAdapter {
-    /// parse create he interna rappresentation of the config file/mode
+    /// parse create he internal presentation of the config file/mode
     fn parse(&mut self) -> AdapterResult<()>;
-    /// get_map returns a key value map rappresentation of the actaul config
+    /// get_map returns a key value map presentation of the actual config
     fn get_map(&self) -> crate::map::Map;
 }
 

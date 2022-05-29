@@ -22,8 +22,8 @@ impl Map {
         }
     }
 
-    pub fn drain<'a>(&'a mut self) -> Drain<'a, String, ViperusValue> {
-      self.data.drain()
+    pub fn drain(&mut self) -> Drain<String, ViperusValue> {
+        self.data.drain()
     }
 
     pub fn add<T>(&mut self, key: &str, value: T) -> Option<T>
@@ -31,10 +31,9 @@ impl Map {
         ViperusValue: From<T>,
         ViperusValue: Into<T>,
     {
-        match self.data.insert(key.to_string(), ViperusValue::from(value)) {
-            None => None,
-            Some(mv) => Some(mv.into()),
-        }
+        self.data
+            .insert(key.to_string(), ViperusValue::from(value))
+            .map(|mv| mv.into())
     }
 
     pub fn add_value(&mut self, key: &str, value: ViperusValue) -> Option<ViperusValue> {
@@ -63,13 +62,10 @@ impl Map {
         &'c ViperusValue: Into<T>,
         ViperusValue: Into<T>,
     {
-        match self.data.get(key) {
-            None => None,
-            Some(mv) => Some((*mv).clone().into()),
-        }
+        self.data.get(key).map(|mv| (*mv).clone().into())
     }
 
-    pub fn merge(&mut self, src: &Map)  {
+    pub fn merge(&mut self, src: &Map) {
         for (k, v) in &src.data {
             self.add_value(k, v.clone());
         }
@@ -87,7 +83,7 @@ mod tests {
         let mv1 = m.get_value("test.value").unwrap();
         if let ViperusValue::I32(v1) = mv1 {
             assert_eq!(10, *v1);
-        }  
+        }
     }
 
     #[test]
@@ -97,10 +93,10 @@ mod tests {
 
         let mv0 = m.add_value("test.value", ViperusValue::from(42));
         assert_eq!(None, mv0);
-      
+
         let _a1 = m.add::<i32>("test.value_i32", 314).unwrap_or_default();
         let _a2 = m.add::<i32>("test.value_i32", 314).unwrap_or_default();
-        
+
         let v1 = m.get::<i32>("test.value").unwrap();
         assert_eq!(42, v1);
 

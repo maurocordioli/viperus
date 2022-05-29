@@ -29,6 +29,7 @@ impl EnvAdapter {
         &self.real_path
     }
 }
+
 impl ConfigAdapter for EnvAdapter {
     fn parse(&mut self) -> AdapterResult<()> {
         self.data = dotenv::vars().collect();

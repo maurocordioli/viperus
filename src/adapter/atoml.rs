@@ -1,5 +1,5 @@
 use super::*;
-use toml;
+use log::debug;
 
 /// TomlAdapter map a Toml file in a linear multilevel key/value array
 ///

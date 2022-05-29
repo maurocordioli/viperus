@@ -39,19 +39,18 @@ fn main() {
     #[cfg(feature = "fmt-yaml")]
     {
         println!("Feature: `fmt-yml`, parsing ...");
-    viperus::load_file(&path!("examples", "example.yaml"), viperus::Format::YAML).unwrap();
+        viperus::load_file(&path!("examples", "example.yaml"), viperus::Format::YAML).unwrap();
 
         println!("Parsed parameters:");
-        println!(" - config: {}",
-                 viperus::get::<String>("config.file").unwrap()
+        println!(
+            " - config: {}",
+            viperus::get::<String>("config.file").unwrap()
         );
-        println!(" - url: {}",
-        viperus::get::<String>("service.url").unwrap()
-    );
+        println!(" - url: {}", viperus::get::<String>("service.url").unwrap());
     }
 }
 
 #[cfg(not(all(feature = "global", feature = "fmt-clap")))]
 fn main() {
-    println!("Viperus: opted out feature `global`, `fmt-clap`" );
+    println!("Viperus: opted out feature `global`, `fmt-clap`");
 }

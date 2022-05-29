@@ -4,7 +4,7 @@ use java_properties::PropertiesIter;
 
 use std::io::BufReader;
 
-/// JPropertiesAdapter map a ajava properties file in a linear multilevel key/value array
+/// JPropertiesAdapter map a java properties file in a linear multilevel key/value array
 ///
 /// the adaptor could be consumed by Viperous
 /// internally uses java_properties crate
